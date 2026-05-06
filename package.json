@@ -1,0 +1,22 @@
+{
+  "name": "agentrail-e2e-sandbox",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "lint": "node scripts/lint-repo.mjs",
+    "scenario:validate": "node scripts/validate-scenarios.mjs",
+    "catalog:validate": "node scripts/validate-catalog.mjs",
+    "test": "npm run build && node --test dist/apps/api/test/server.test.js dist/packages/task-engine/test/index.test.js dist/packages/contracts/test/index.test.js"
+  },
+  "devDependencies": {
+    "@types/node": "^24.6.0",
+    "typescript": "^5.8.3"
+  }
+}

@@ -1,0 +1,24 @@
+name: Bug
+description: Report a deterministic sandbox bug
+title: "[Bug]: "
+labels:
+  - bug
+body:
+  - type: textarea
+    id: summary
+    attributes:
+      label: Summary
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance Criteria
+      description: Use checklist items when possible.
+    validations:
+      required: true
+  - type: input
+    id: scenario
+    attributes:
+      label: Scenario Id
+      placeholder: failing-open

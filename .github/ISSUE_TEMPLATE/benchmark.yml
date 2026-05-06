@@ -1,0 +1,23 @@
+name: Benchmark Task
+description: Add or update a deterministic benchmark task
+title: "[Benchmark]: "
+labels:
+  - benchmark
+body:
+  - type: input
+    id: benchmark_id
+    attributes:
+      label: Benchmark Id
+      placeholder: bm_engine_issue_ingest
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance Criteria
+    validations:
+      required: true
+  - type: textarea
+    id: scoring
+    attributes:
+      label: Scoring Notes

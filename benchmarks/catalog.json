@@ -1,0 +1,216 @@
+{
+  "version": 1,
+  "tasks": [
+    {
+      "id": "bm_contract_priority_labels",
+      "title": "Normalize priority labels in contract metadata",
+      "issueSlug": "benchmark-priority-label-normalization",
+      "scenarioId": "golden-open",
+      "priority": "high",
+      "packages": [
+        "packages/contracts"
+      ],
+      "taskType": "bugfix",
+      "acceptanceCriteria": [
+        "Priority aliases map to critical, high, medium, or low.",
+        "Contract validation rejects unknown priority values.",
+        "Tests cover label normalization edge cases."
+      ],
+      "expectedChangedPaths": [
+        "packages/contracts/src/index.ts",
+        "packages/contracts/test/index.test.ts"
+      ],
+      "requiredChecks": [
+        "CI / Unit Tests",
+        "Lint / Repo Checks"
+      ],
+      "requiredArtifacts": [
+        "pull_request",
+        "test_evidence"
+      ],
+      "scoring": {
+        "correctness": 0.5,
+        "tests": 0.25,
+        "scope_control": 0.15,
+        "artifact_quality": 0.1
+      }
+    },
+    {
+      "id": "bm_contract_scenario_validation",
+      "title": "Tighten scenario manifest validation",
+      "issueSlug": "benchmark-scenario-manifest-guardrails",
+      "scenarioId": "failing-open",
+      "priority": "high",
+      "packages": [
+        "packages/contracts"
+      ],
+      "taskType": "hardening",
+      "acceptanceCriteria": [
+        "Scenario manifests reject seeded entries without fixed branches.",
+        "Scratch scenarios may use branch templates.",
+        "Validation errors identify the broken scenario id."
+      ],
+      "expectedChangedPaths": [
+        "packages/contracts/src/index.ts",
+        "packages/contracts/test/index.test.ts",
+        "scripts/validate-scenarios.mjs"
+      ],
+      "requiredChecks": [
+        "CI / Unit Tests",
+        "Scenario Contract / Validate Scenario Manifest"
+      ],
+      "requiredArtifacts": [
+        "pull_request",
+        "review_resolution"
+      ],
+      "scoring": {
+        "correctness": 0.45,
+        "tests": 0.25,
+        "review_handling": 0.2,
+        "artifact_quality": 0.1
+      }
+    },
+    {
+      "id": "bm_engine_issue_ingest",
+      "title": "Preserve task context across sparse issue updates",
+      "issueSlug": "benchmark-sparse-issue-update-context",
+      "scenarioId": "scratch-live-cycle",
+      "priority": "medium",
+      "packages": [
+        "packages/task-engine"
+      ],
+      "taskType": "bugfix",
+      "acceptanceCriteria": [
+        "Sparse issue updates keep existing labels when new payload omits labels.",
+        "Sparse issue updates keep assignee metadata when omitted.",
+        "Tests cover open and closed issue states."
+      ],
+      "expectedChangedPaths": [
+        "packages/task-engine/src/index.ts",
+        "packages/task-engine/test/index.test.ts"
+      ],
+      "requiredChecks": [
+        "CI / Unit Tests"
+      ],
+      "requiredArtifacts": [
+        "pull_request",
+        "ship_candidate"
+      ],
+      "scoring": {
+        "correctness": 0.55,
+        "tests": 0.25,
+        "scope_control": 0.1,
+        "artifact_quality": 0.1
+      }
+    },
+    {
+      "id": "bm_engine_review_actions",
+      "title": "Recommend actions from CI and review state",
+      "issueSlug": "benchmark-review-action-recommendation",
+      "scenarioId": "failing-open",
+      "priority": "medium",
+      "packages": [
+        "packages/task-engine"
+      ],
+      "taskType": "feature",
+      "acceptanceCriteria": [
+        "Failed CI blocks ship recommendations.",
+        "Approved reviews with passing CI expose ship.",
+        "Pending reviews expose refresh-oriented actions."
+      ],
+      "expectedChangedPaths": [
+        "packages/task-engine/src/index.ts",
+        "packages/task-engine/test/index.test.ts"
+      ],
+      "requiredChecks": [
+        "CI / Unit Tests",
+        "Lint / Repo Checks"
+      ],
+      "requiredArtifacts": [
+        "pull_request",
+        "review_resolution"
+      ],
+      "scoring": {
+        "correctness": 0.5,
+        "tests": 0.3,
+        "scope_control": 0.1,
+        "artifact_quality": 0.1
+      }
+    },
+    {
+      "id": "bm_api_benchmark_endpoint",
+      "title": "Expose benchmark task details through the API",
+      "issueSlug": "benchmark-api-task-catalog-endpoint",
+      "scenarioId": "golden-open",
+      "priority": "medium",
+      "packages": [
+        "apps/api",
+        "packages/contracts"
+      ],
+      "taskType": "feature",
+      "acceptanceCriteria": [
+        "API returns benchmark task metadata by id.",
+        "Unknown task ids return 404 JSON responses.",
+        "Tests cover success and not-found responses."
+      ],
+      "expectedChangedPaths": [
+        "apps/api/src/server.ts",
+        "apps/api/test/server.test.ts",
+        "packages/contracts/src/index.ts"
+      ],
+      "requiredChecks": [
+        "CI / Unit Tests"
+      ],
+      "requiredArtifacts": [
+        "pull_request",
+        "test_evidence"
+      ],
+      "scoring": {
+        "correctness": 0.5,
+        "tests": 0.25,
+        "api_behavior": 0.15,
+        "artifact_quality": 0.1
+      }
+    },
+    {
+      "id": "bm_crosspkg_rollback_audit",
+      "title": "Record rollback eligibility in task snapshots",
+      "issueSlug": "benchmark-rollback-eligibility-audit",
+      "scenarioId": "scratch-live-cycle",
+      "priority": "high",
+      "packages": [
+        "apps/api",
+        "packages/task-engine",
+        "packages/contracts"
+      ],
+      "taskType": "cross_cutting",
+      "acceptanceCriteria": [
+        "Task snapshots expose rollback eligibility.",
+        "Eligibility respects scenario allowRollback flags.",
+        "API and engine tests cover seeded and scratch scenarios."
+      ],
+      "expectedChangedPaths": [
+        "apps/api/src/server.ts",
+        "apps/api/test/server.test.ts",
+        "packages/task-engine/src/index.ts",
+        "packages/task-engine/test/index.test.ts",
+        "packages/contracts/src/index.ts"
+      ],
+      "requiredChecks": [
+        "CI / Unit Tests",
+        "Scenario Contract / Validate Scenario Manifest"
+      ],
+      "requiredArtifacts": [
+        "pull_request",
+        "ship_candidate",
+        "rollback_plan"
+      ],
+      "scoring": {
+        "correctness": 0.45,
+        "tests": 0.25,
+        "cross_package_safety": 0.2,
+        "artifact_quality": 0.1
+      }
+    }
+  ]
+}

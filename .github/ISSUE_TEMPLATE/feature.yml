@@ -1,0 +1,23 @@
+name: Feature
+description: Request a new deterministic sandbox capability
+title: "[Feature]: "
+labels:
+  - feature
+body:
+  - type: textarea
+    id: summary
+    attributes:
+      label: Summary
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance Criteria
+    validations:
+      required: true
+  - type: input
+    id: scenario
+    attributes:
+      label: Preferred Scenario
+      placeholder: scratch-live-cycle
