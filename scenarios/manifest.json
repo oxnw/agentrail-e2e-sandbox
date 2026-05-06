@@ -1,0 +1,87 @@
+{
+  "version": 1,
+  "defaultScratchBaseBranch": "integration/live",
+  "scenarios": [
+    {
+      "id": "golden-open",
+      "kind": "seeded",
+      "issueSlug": "benchmark-api-timeout-policy",
+      "branch": "scenario/golden-open",
+      "baseBranch": "main",
+      "shipTargetBranch": "integration/live",
+      "expectedCiStatus": "passed",
+      "expectedReviewOutcome": "approved",
+      "allowSubmit": true,
+      "allowShip": false,
+      "allowRollback": false,
+      "live": {
+        "owner": "oxnw",
+        "repo": "agentrail-e2e-sandbox",
+        "issueNumber": 1,
+        "pullNumber": 1,
+        "headBranch": "scenario/golden-open"
+      },
+      "notes": "Stable green path for CI and review reads."
+    },
+    {
+      "id": "failing-open",
+      "kind": "seeded",
+      "issueSlug": "benchmark-review-retry-guard",
+      "branch": "scenario/failing-open",
+      "baseBranch": "main",
+      "shipTargetBranch": "integration/live",
+      "expectedCiStatus": "failed",
+      "expectedReviewOutcome": "changes_requested",
+      "allowSubmit": true,
+      "allowShip": false,
+      "allowRollback": false,
+      "live": {
+        "owner": "oxnw",
+        "repo": "agentrail-e2e-sandbox",
+        "issueNumber": 2,
+        "pullNumber": 2,
+        "headBranch": "scenario/failing-open"
+      },
+      "notes": "Deterministic failure path with review feedback."
+    },
+    {
+      "id": "flaky-open",
+      "kind": "seeded",
+      "issueSlug": "benchmark-rerun-flaky-sync",
+      "branch": "scenario/flaky-open",
+      "baseBranch": "main",
+      "shipTargetBranch": "integration/live",
+      "expectedCiStatus": "flaky",
+      "expectedReviewOutcome": "pending",
+      "allowSubmit": true,
+      "allowShip": false,
+      "allowRollback": false,
+      "live": {
+        "owner": "oxnw",
+        "repo": "agentrail-e2e-sandbox",
+        "issueNumber": 3,
+        "pullNumber": 3,
+        "headBranch": "scenario/flaky-open"
+      },
+      "notes": "Rerun or prior-pass path for flaky-hint validation."
+    },
+    {
+      "id": "scratch-live-cycle",
+      "kind": "scratch",
+      "issueSlug": "scratch-live-cycle-template",
+      "branch": "scratch/<feature>-<date>",
+      "baseBranch": "integration/live",
+      "shipTargetBranch": "integration/live",
+      "expectedCiStatus": "variable",
+      "expectedReviewOutcome": "variable",
+      "allowSubmit": true,
+      "allowShip": true,
+      "allowRollback": true,
+      "live": {
+        "owner": "oxnw",
+        "repo": "agentrail-e2e-sandbox"
+      },
+      "notes": "Disposable lane for intake through rollback."
+    }
+  ]
+}
