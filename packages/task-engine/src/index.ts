@@ -1,5 +1,62 @@
 import type { BenchmarkTask, CiStatus, ReviewOutcome, ScenarioDefinition, TaskSnapshot, TaskStatus } from "../../contracts/src/index.js";
 
+export type GitHubIssueState = "open" | "closed";
+
+export interface GitHubIssueLabel {
+  id?: string;
+  name: string;
+  color?: string;
+  description?: string | null;
+}
+
+export interface GitHubIssueAssignee {
+  id?: string;
+  login: string;
+  name?: string | null;
+  avatarUrl?: string;
+  url?: string;
+}
+
+export interface GitHubIssueContext {
+  number: number;
+  title: string;
+  state: GitHubIssueState;
+  labels: GitHubIssueLabel[];
+  assignees: GitHubIssueAssignee[];
+  assignee?: GitHubIssueAssignee | null;
+}
+
+export type SparseGitHubIssueUpdate = Partial<GitHubIssueContext>;
+
+export function mergeGitHubIssueUpdate(
+  current: GitHubIssueContext,
+  update: SparseGitHubIssueUpdate
+): GitHubIssueContext {
+  const merged = {
+    ...current,
+    ...update,
+    labels: hasDefinedIssueField(update, "labels") ? update.labels : current.labels,
+    assignees: hasDefinedIssueField(update, "assignees") ? update.assignees : current.assignees
+  };
+
+  if (hasDefinedIssueField(update, "assignee")) {
+    merged.assignee = update.assignee;
+  } else if ("assignee" in current) {
+    merged.assignee = current.assignee;
+  } else {
+    delete merged.assignee;
+  }
+
+  return merged;
+}
+
+function hasDefinedIssueField<TKey extends keyof SparseGitHubIssueUpdate>(
+  update: SparseGitHubIssueUpdate,
+  key: TKey
+): update is SparseGitHubIssueUpdate & Required<Pick<SparseGitHubIssueUpdate, TKey>> {
+  return Object.prototype.hasOwnProperty.call(update, key) && update[key] !== undefined;
+}
+
 export function deriveReviewGate({
   ciStatus,
   reviewOutcome,
