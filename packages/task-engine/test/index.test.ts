@@ -1,6 +1,33 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { buildTaskSnapshot, deriveReviewGate } from "../src/index.js";
+import { buildTaskSnapshot, deriveReviewGate, ingestIssueUpdate } from "../src/index.js";
+
+function existingIssue(state: "open" | "closed") {
+  return {
+    id: 1600,
+    number: 16,
+    title: "Preserve task context across sparse issue updates",
+    state,
+    labels: [
+      { id: 101, name: "benchmark", color: "0366d6", description: "Benchmark task" },
+      { id: 102, name: "task-engine", color: "0e8a16", description: null }
+    ],
+    assignee: {
+      id: 501,
+      login: "agentrail-bot",
+      htmlUrl: "https://github.com/agentrail-bot"
+    },
+    assignees: [
+      {
+        id: 501,
+        login: "agentrail-bot",
+        htmlUrl: "https://github.com/agentrail-bot"
+      }
+    ],
+    updatedAt: "2026-05-11T10:00:00.000Z",
+    closedAt: state === "closed" ? "2026-05-11T11:00:00.000Z" : null
+  };
+}
 
 test("deriveReviewGate blocks ship when CI is failing", () => {
   const result = deriveReviewGate({ ciStatus: "failed", reviewOutcome: "approved" });
@@ -18,6 +45,64 @@ test("deriveReviewGate hides ship for approved seeded scenarios with allowShip f
   const result = deriveReviewGate({ ciStatus: "passed", reviewOutcome: "approved", allowShip: false });
   assert.equal(result.status, "ready_to_ship");
   assert.deepEqual(result.availableActions, ["view_ci_status", "view_review_feedback"]);
+});
+
+test("ingestIssueUpdate keeps labels when open issue update omits labels", () => {
+  const issue = existingIssue("open");
+
+  const result = ingestIssueUpdate(issue, {
+    number: 16,
+    title: "Updated open issue title",
+    state: "open",
+    updatedAt: "2026-05-11T12:00:00.000Z"
+  });
+
+  assert.deepEqual(result.labels, issue.labels);
+  assert.equal(result.title, "Updated open issue title");
+  assert.equal(result.state, "open");
+});
+
+test("ingestIssueUpdate keeps assignee metadata when open issue update omits assignees", () => {
+  const issue = existingIssue("open");
+
+  const result = ingestIssueUpdate(issue, {
+    number: 16,
+    state: "open",
+    updatedAt: "2026-05-11T12:00:00.000Z"
+  });
+
+  assert.deepEqual(result.assignee, issue.assignee);
+  assert.deepEqual(result.assignees, issue.assignees);
+});
+
+test("ingestIssueUpdate keeps labels when closed issue update omits labels", () => {
+  const issue = existingIssue("closed");
+
+  const result = ingestIssueUpdate(issue, {
+    number: 16,
+    title: "Closed issue update",
+    state: "closed",
+    closedAt: "2026-05-11T12:30:00.000Z",
+    updatedAt: "2026-05-11T12:00:00.000Z"
+  });
+
+  assert.deepEqual(result.labels, issue.labels);
+  assert.equal(result.closedAt, "2026-05-11T12:30:00.000Z");
+  assert.equal(result.state, "closed");
+});
+
+test("ingestIssueUpdate keeps assignee metadata when closed issue update omits assignees", () => {
+  const issue = existingIssue("closed");
+
+  const result = ingestIssueUpdate(issue, {
+    number: 16,
+    state: "closed",
+    updatedAt: "2026-05-11T12:00:00.000Z"
+  });
+
+  assert.deepEqual(result.assignee, issue.assignee);
+  assert.deepEqual(result.assignees, issue.assignees);
+  assert.equal(result.state, "closed");
 });
 
 test("buildTaskSnapshot reflects rollback eligibility from scenario", () => {
