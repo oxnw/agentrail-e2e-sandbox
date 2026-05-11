@@ -1,6 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { buildTaskSnapshot, deriveReviewGate } from "../src/index.js";
+import { buildTaskSnapshot, deriveReviewGate, mergeIssueUpdate } from "../src/index.js";
+import type { IssueSnapshot } from "../src/index.js";
 
 test("deriveReviewGate blocks ship when CI is failing", () => {
   const result = deriveReviewGate({ ciStatus: "failed", reviewOutcome: "approved" });
@@ -101,4 +102,49 @@ test("buildTaskSnapshot keeps seeded ready state while suppressing ship action",
 
   assert.equal(snapshot.status, "ready_to_ship");
   assert.deepEqual(snapshot.availableActions, ["view_ci_status", "view_review_feedback"]);
+});
+
+test("mergeIssueUpdate preserves labels and assignee for sparse open issue updates", () => {
+  const existing: IssueSnapshot = {
+    number: 19,
+    title: "Preserve context",
+    state: "open",
+    labels: [{ id: 1, name: "benchmark", color: "0e8a16" }],
+    assignee: { id: 2, login: "agentrail-bot", htmlUrl: "https://github.com/agentrail-bot" },
+    updatedAt: "2026-05-11T20:00:00Z"
+  };
+
+  const result = mergeIssueUpdate(existing, {
+    title: "Preserve task context across sparse issue updates",
+    state: "open",
+    updatedAt: "2026-05-11T21:00:00Z"
+  });
+
+  assert.equal(result.title, "Preserve task context across sparse issue updates");
+  assert.equal(result.state, "open");
+  assert.deepEqual(result.labels, existing.labels);
+  assert.deepEqual(result.assignee, existing.assignee);
+});
+
+test("mergeIssueUpdate preserves labels and assignee for sparse closed issue updates", () => {
+  const existing: IssueSnapshot = {
+    number: 19,
+    title: "Preserve context",
+    state: "open",
+    labels: [{ id: 1, name: "benchmark", color: "0e8a16" }],
+    assignee: { id: 2, login: "agentrail-bot", htmlUrl: "https://github.com/agentrail-bot" },
+    updatedAt: "2026-05-11T20:00:00Z",
+    closedAt: null
+  };
+
+  const result = mergeIssueUpdate(existing, {
+    state: "closed",
+    updatedAt: "2026-05-11T22:00:00Z",
+    closedAt: "2026-05-11T22:00:00Z"
+  });
+
+  assert.equal(result.state, "closed");
+  assert.equal(result.closedAt, "2026-05-11T22:00:00Z");
+  assert.deepEqual(result.labels, existing.labels);
+  assert.deepEqual(result.assignee, existing.assignee);
 });
