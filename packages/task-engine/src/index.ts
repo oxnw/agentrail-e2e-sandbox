@@ -1,5 +1,58 @@
 import type { BenchmarkTask, CiStatus, ReviewOutcome, ScenarioDefinition, TaskSnapshot, TaskStatus } from "../../contracts/src/index.js";
 
+export type GitHubIssueState = "open" | "closed";
+
+export interface GitHubIssueLabel {
+  id?: number;
+  name: string;
+  color?: string;
+  description?: string | null;
+  [metadata: string]: unknown;
+}
+
+export interface GitHubIssueAssignee {
+  id?: number;
+  login: string;
+  [metadata: string]: unknown;
+}
+
+export interface GitHubIssueSnapshot {
+  id?: number;
+  number?: number;
+  title?: string;
+  state?: GitHubIssueState;
+  labels?: GitHubIssueLabel[];
+  assignee?: GitHubIssueAssignee | null;
+  assignees?: GitHubIssueAssignee[];
+  [metadata: string]: unknown;
+}
+
+export type SparseGitHubIssueUpdate = Partial<GitHubIssueSnapshot>;
+
+export function ingestIssueUpdate<TIssue extends GitHubIssueSnapshot>(
+  existingIssue: TIssue,
+  update: SparseGitHubIssueUpdate
+): TIssue & SparseGitHubIssueUpdate {
+  const nextIssue = {
+    ...existingIssue,
+    ...update
+  };
+
+  if (update.labels === undefined) {
+    nextIssue.labels = existingIssue.labels;
+  }
+  if (update.assignee === undefined) {
+    nextIssue.assignee = existingIssue.assignee;
+  }
+  if (update.assignees === undefined) {
+    nextIssue.assignees = existingIssue.assignees;
+  }
+
+  return nextIssue;
+}
+
+export const mergeIssueUpdate = ingestIssueUpdate;
+
 export function deriveReviewGate({
   ciStatus,
   reviewOutcome,
