@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { normalizePriorityLabel, validateScenarioDefinition } from "../src/index.js";
+import { normalizePriorityLabel, validateBenchmarkTask, validateScenarioDefinition } from "../src/index.js";
 
 test("normalizePriorityLabel maps aliases", () => {
   assert.equal(normalizePriorityLabel("p0"), "critical");
@@ -9,8 +9,55 @@ test("normalizePriorityLabel maps aliases", () => {
   assert.equal(normalizePriorityLabel("p2"), "low");
 });
 
+test("normalizePriorityLabel handles label edge cases", () => {
+  assert.equal(normalizePriorityLabel(" CRIT "), "critical");
+  assert.equal(normalizePriorityLabel("sev-1"), "high");
+  assert.equal(normalizePriorityLabel("Severity 2"), "medium");
+  assert.equal(normalizePriorityLabel("sev_3"), "low");
+});
+
 test("normalizePriorityLabel rejects unknown values", () => {
   assert.throws(() => normalizePriorityLabel("urgent"));
+});
+
+test("validateBenchmarkTask normalizes priority metadata", () => {
+  const task = validateBenchmarkTask({
+    id: "bm-priority",
+    title: "Priority labels",
+    issueSlug: "priority-labels",
+    scenarioId: "golden-open",
+    priority: "P-1",
+    packages: ["packages/contracts"],
+    taskType: "bugfix",
+    acceptanceCriteria: ["Priority aliases normalize."],
+    expectedChangedPaths: ["packages/contracts/src/index.ts"],
+    requiredChecks: ["npm test"],
+    requiredArtifacts: ["pull_request"],
+    scoring: {
+      correctness: 1
+    }
+  });
+
+  assert.equal(task.priority, "high");
+});
+
+test("validateBenchmarkTask rejects unknown priority metadata", () => {
+  assert.throws(() => validateBenchmarkTask({
+    id: "bm-priority",
+    title: "Priority labels",
+    issueSlug: "priority-labels",
+    scenarioId: "golden-open",
+    priority: "urgent",
+    packages: ["packages/contracts"],
+    taskType: "bugfix",
+    acceptanceCriteria: ["Priority aliases normalize."],
+    expectedChangedPaths: ["packages/contracts/src/index.ts"],
+    requiredChecks: ["npm test"],
+    requiredArtifacts: ["pull_request"],
+    scoring: {
+      correctness: 1
+    }
+  }));
 });
 
 test("validateScenarioDefinition rejects templated seeded branches", () => {
