@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { buildTaskSnapshot, deriveReviewGate } from "../src/index.js";
+import { buildTaskSnapshot, deriveReviewGate, mergeGitHubIssueUpdate } from "../src/index.js";
 
 test("deriveReviewGate blocks ship when CI is failing", () => {
   const result = deriveReviewGate({ ciStatus: "failed", reviewOutcome: "approved" });
@@ -101,4 +101,47 @@ test("buildTaskSnapshot keeps seeded ready state while suppressing ship action",
 
   assert.equal(snapshot.status, "ready_to_ship");
   assert.deepEqual(snapshot.availableActions, ["view_ci_status", "view_review_feedback"]);
+});
+
+test("mergeGitHubIssueUpdate keeps labels and assignees for sparse open issue updates", () => {
+  const current = {
+    number: 22,
+    title: "Preserve task context",
+    state: "open" as const,
+    labels: [{ id: "label-1", name: "enhancement", color: "a2eeef" }],
+    assignee: { id: "user-1", login: "octocat", name: "Mona" },
+    assignees: [{ id: "user-1", login: "octocat", name: "Mona" }]
+  };
+
+  const updated = mergeGitHubIssueUpdate(current, {
+    title: "Preserve sparse issue context",
+    state: "open"
+  });
+
+  assert.equal(updated.title, "Preserve sparse issue context");
+  assert.equal(updated.state, "open");
+  assert.deepEqual(updated.labels, current.labels);
+  assert.deepEqual(updated.assignee, current.assignee);
+  assert.deepEqual(updated.assignees, current.assignees);
+});
+
+test("mergeGitHubIssueUpdate keeps labels and assignees for sparse closed issue updates", () => {
+  const current = {
+    number: 22,
+    title: "Preserve task context",
+    state: "open" as const,
+    labels: [{ id: "label-1", name: "enhancement", color: "a2eeef" }],
+    assignee: { id: "user-1", login: "octocat", name: "Mona" },
+    assignees: [{ id: "user-1", login: "octocat", name: "Mona" }]
+  };
+
+  const updated = mergeGitHubIssueUpdate(current, {
+    state: "closed"
+  });
+
+  assert.equal(updated.title, "Preserve task context");
+  assert.equal(updated.state, "closed");
+  assert.deepEqual(updated.labels, current.labels);
+  assert.deepEqual(updated.assignee, current.assignee);
+  assert.deepEqual(updated.assignees, current.assignees);
 });
