@@ -50,6 +50,10 @@ export interface BenchmarkTask {
   scoring: Record<string, number>;
 }
 
+export type BenchmarkTaskInput = Omit<BenchmarkTask, "priority"> & {
+  priority: string;
+};
+
 export interface BenchmarkCatalog {
   version: number;
   tasks: BenchmarkTask[];
@@ -67,23 +71,44 @@ export interface TaskSnapshot {
 
 const PRIORITY_ALIASES = new Map<string, Priority>([
   ["critical", "critical"],
+  ["crit", "critical"],
   ["p0", "critical"],
   ["sev0", "critical"],
+  ["severity0", "critical"],
   ["high", "high"],
   ["p1", "high"],
+  ["sev1", "high"],
+  ["severity1", "high"],
   ["medium", "medium"],
+  ["med", "medium"],
   ["normal", "medium"],
   ["default", "medium"],
+  ["sev2", "medium"],
+  ["severity2", "medium"],
   ["low", "low"],
-  ["p2", "low"]
+  ["p2", "low"],
+  ["p3", "low"],
+  ["sev3", "low"],
+  ["severity3", "low"]
 ]);
 
 export function normalizePriorityLabel(label: string): Priority {
-  const normalized = PRIORITY_ALIASES.get(label.toLowerCase());
+  const normalized = PRIORITY_ALIASES.get(toPriorityAliasKey(label));
   if (!normalized) {
     throw new Error(`Unknown priority label: ${label}`);
   }
   return normalized;
+}
+
+export function validateBenchmarkTask(task: BenchmarkTaskInput): BenchmarkTask {
+  return {
+    ...task,
+    priority: normalizePriorityLabel(task.priority)
+  };
+}
+
+function toPriorityAliasKey(label: string): string {
+  return label.trim().toLowerCase().replace(/[\s_-]+/g, "");
 }
 
 export function validateScenarioDefinition(scenario: ScenarioDefinition) {
