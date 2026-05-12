@@ -67,23 +67,48 @@ export interface TaskSnapshot {
 
 const PRIORITY_ALIASES = new Map<string, Priority>([
   ["critical", "critical"],
+  ["crit", "critical"],
+  ["blocker", "critical"],
   ["p0", "critical"],
+  ["p-0", "critical"],
   ["sev0", "critical"],
+  ["sev-0", "critical"],
   ["high", "high"],
   ["p1", "high"],
+  ["p-1", "high"],
+  ["sev1", "high"],
+  ["sev-1", "high"],
   ["medium", "medium"],
+  ["med", "medium"],
   ["normal", "medium"],
   ["default", "medium"],
   ["low", "low"],
-  ["p2", "low"]
+  ["minor", "low"],
+  ["p2", "low"],
+  ["p-2", "low"],
+  ["sev2", "low"],
+  ["sev-2", "low"]
 ]);
 
 export function normalizePriorityLabel(label: string): Priority {
-  const normalized = PRIORITY_ALIASES.get(label.toLowerCase());
+  const key = label.trim().toLowerCase().replace(/[\s_]+/g, "-");
+  const normalized = PRIORITY_ALIASES.get(key);
   if (!normalized) {
     throw new Error(`Unknown priority label: ${label}`);
   }
   return normalized;
+}
+
+export function validateBenchmarkTask(task: BenchmarkTask): BenchmarkTask {
+  task.priority = normalizePriorityLabel(task.priority);
+  return task;
+}
+
+export function validateBenchmarkCatalog(catalog: BenchmarkCatalog): BenchmarkCatalog {
+  for (const task of catalog.tasks) {
+    validateBenchmarkTask(task);
+  }
+  return catalog;
 }
 
 export function validateScenarioDefinition(scenario: ScenarioDefinition) {
