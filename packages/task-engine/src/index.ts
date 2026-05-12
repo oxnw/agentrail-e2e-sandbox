@@ -1,5 +1,45 @@
 import type { BenchmarkTask, CiStatus, ReviewOutcome, ScenarioDefinition, TaskSnapshot, TaskStatus } from "../../contracts/src/index.js";
 
+export type GitHubIssueState = "open" | "closed";
+
+export interface GitHubIssueLabel {
+  id?: number;
+  name: string;
+  color?: string;
+  description?: string | null;
+}
+
+export interface GitHubIssueAssignee {
+  id?: number;
+  login: string;
+  avatarUrl?: string;
+  htmlUrl?: string;
+}
+
+export interface GitHubIssueSnapshot {
+  number: number;
+  title: string;
+  state: GitHubIssueState;
+  labels: GitHubIssueLabel[];
+  assignee: GitHubIssueAssignee | null;
+  assignees: GitHubIssueAssignee[];
+}
+
+export type SparseGitHubIssueUpdate = Partial<GitHubIssueSnapshot>;
+
+export function mergeGitHubIssueUpdate(
+  current: GitHubIssueSnapshot,
+  update: SparseGitHubIssueUpdate
+): GitHubIssueSnapshot {
+  return {
+    ...current,
+    ...update,
+    labels: update.labels ?? current.labels,
+    assignee: update.assignee === undefined ? current.assignee : update.assignee,
+    assignees: update.assignees ?? current.assignees
+  };
+}
+
 export function deriveReviewGate({
   ciStatus,
   reviewOutcome,
