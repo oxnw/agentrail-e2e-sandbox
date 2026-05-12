@@ -1,5 +1,30 @@
 import type { BenchmarkTask, CiStatus, ReviewOutcome, ScenarioDefinition, TaskSnapshot, TaskStatus } from "../../contracts/src/index.js";
 
+export type IssueState = "open" | "closed";
+
+export interface IssueLabel {
+  id?: number;
+  name: string;
+  [key: string]: unknown;
+}
+
+export interface IssueAssignee {
+  id?: number;
+  login: string;
+  [key: string]: unknown;
+}
+
+export interface IssueSnapshot {
+  number: number;
+  title: string;
+  state: IssueState;
+  labels: IssueLabel[];
+  assignee?: IssueAssignee | null;
+  assignees?: IssueAssignee[];
+}
+
+export type SparseIssueUpdate<TIssue extends IssueSnapshot = IssueSnapshot> = Partial<TIssue>;
+
 export function deriveReviewGate({
   ciStatus,
   reviewOutcome,
@@ -49,4 +74,37 @@ export function buildTaskSnapshot({
     availableActions: reviewGate.availableActions,
     rollbackEligible: Boolean(scenario?.allowRollback)
   };
+}
+
+export function mergeIssueUpdate<TIssue extends IssueSnapshot>(
+  current: TIssue,
+  update: SparseIssueUpdate<TIssue>
+): TIssue {
+  const merged = { ...current, ...update };
+
+  if (!hasOwn(update, "labels")) {
+    merged.labels = current.labels;
+  }
+  if (!hasOwn(update, "assignee") && hasOwn(current, "assignee")) {
+    merged.assignee = current.assignee;
+  }
+  if (!hasOwn(update, "assignees") && hasOwn(current, "assignees")) {
+    merged.assignees = current.assignees;
+  }
+
+  return merged as TIssue;
+}
+
+export function ingestIssueUpdate<TIssue extends IssueSnapshot>(
+  current: TIssue,
+  update: SparseIssueUpdate<TIssue>
+): TIssue {
+  return mergeIssueUpdate(current, update);
+}
+
+function hasOwn<T extends object, K extends PropertyKey>(
+  value: T,
+  key: K
+): value is T & Record<K, unknown> {
+  return Object.prototype.hasOwnProperty.call(value, key);
 }

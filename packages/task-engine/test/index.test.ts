@@ -1,6 +1,19 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { buildTaskSnapshot, deriveReviewGate } from "../src/index.js";
+import { buildTaskSnapshot, deriveReviewGate, ingestIssueUpdate, mergeIssueUpdate } from "../src/index.js";
+
+interface IssueFixture {
+  number: number;
+  title: string;
+  state: "open" | "closed";
+  labels: Array<{ id: number; name: string }>;
+  assignee: { id: number; login: string };
+  assignees: Array<{ id: number; login: string }>;
+  body?: string;
+  closedAt?: string;
+}
+
+type IssueUpdate = Partial<IssueFixture>;
 
 test("deriveReviewGate blocks ship when CI is failing", () => {
   const result = deriveReviewGate({ ciStatus: "failed", reviewOutcome: "approved" });
@@ -101,4 +114,55 @@ test("buildTaskSnapshot keeps seeded ready state while suppressing ship action",
 
   assert.equal(snapshot.status, "ready_to_ship");
   assert.deepEqual(snapshot.availableActions, ["view_ci_status", "view_review_feedback"]);
+});
+
+test("ingestIssueUpdate keeps labels and assignee metadata when an open issue update omits them", () => {
+  const existing: IssueFixture = {
+    number: 15,
+    title: "Preserve sparse issue context",
+    state: "open",
+    labels: [
+      { id: 1, name: "agentrail" },
+      { id: 2, name: "benchmark" }
+    ],
+    assignee: { id: 42, login: "benchmark-agent" },
+    assignees: [{ id: 42, login: "benchmark-agent" }],
+    body: "Initial issue body"
+  };
+
+  const result = ingestIssueUpdate(existing, {
+    title: "Preserve task context across sparse issue updates",
+    body: "Updated issue body"
+  } satisfies IssueUpdate);
+
+  assert.equal(result.title, "Preserve task context across sparse issue updates");
+  assert.equal(result.state, "open");
+  assert.deepEqual(result.labels, existing.labels);
+  assert.deepEqual(result.assignee, existing.assignee);
+  assert.deepEqual(result.assignees, existing.assignees);
+});
+
+test("mergeIssueUpdate keeps labels and assignee metadata when a sparse update closes an issue", () => {
+  const existing: IssueFixture = {
+    number: 15,
+    title: "Preserve sparse issue context",
+    state: "open",
+    labels: [
+      { id: 1, name: "agentrail" },
+      { id: 2, name: "benchmark" }
+    ],
+    assignee: { id: 42, login: "benchmark-agent" },
+    assignees: [{ id: 42, login: "benchmark-agent" }]
+  };
+
+  const result = mergeIssueUpdate(existing, {
+    state: "closed",
+    closedAt: "2026-05-12T14:00:00.000Z"
+  } satisfies IssueUpdate);
+
+  assert.equal(result.state, "closed");
+  assert.equal(result.closedAt, "2026-05-12T14:00:00.000Z");
+  assert.deepEqual(result.labels, existing.labels);
+  assert.deepEqual(result.assignee, existing.assignee);
+  assert.deepEqual(result.assignees, existing.assignees);
 });
