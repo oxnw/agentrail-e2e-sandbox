@@ -16,7 +16,7 @@
     "test": "npm run build && node --test dist/apps/api/test/server.test.js dist/packages/task-engine/test/index.test.js dist/packages/contracts/test/index.test.js"
   },
   "devDependencies": {
-    "@types/node": "^24.6.0",
+    "@types/node": "^25.7.0",
     "typescript": "^5.8.3"
   }
 }
