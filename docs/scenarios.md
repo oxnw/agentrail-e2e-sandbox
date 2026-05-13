@@ -7,6 +7,16 @@ The sandbox is scenario-driven. Every live-provider flow should map to a named e
 - `seeded`: long-lived branches and open PRs that support stable CI and review reads
 - `scratch`: disposable branches used for destructive lifecycle validation
 
+## Route map
+
+The API surface mirrors the checked-in manifests so docs and live runs stay aligned:
+
+- `GET /scenarios/:id` returns a single scenario from `scenarios/manifest.json`
+- `GET /benchmarks/:id` returns a single benchmark task from `benchmarks/catalog.json`
+- `GET /tasks` returns task snapshots composed from both manifests
+
+Use these routes when validating scenario-driven docs changes, and use the manifests when updating the canonical data that backs them.
+
 ## Canonical seeded scenarios
 
 ### `golden-open`
