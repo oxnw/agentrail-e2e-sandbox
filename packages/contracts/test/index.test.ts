@@ -6,11 +6,16 @@ test("normalizePriorityLabel maps aliases", () => {
   assert.equal(normalizePriorityLabel("p0"), "critical");
   assert.equal(normalizePriorityLabel("P1"), "high");
   assert.equal(normalizePriorityLabel("default"), "medium");
-  assert.equal(normalizePriorityLabel("p2"), "low");
+  assert.equal(normalizePriorityLabel("p2"), "medium");
+  assert.equal(normalizePriorityLabel(" sev-1 "), "high");
+  assert.equal(normalizePriorityLabel("P_3"), "low");
+  assert.equal(normalizePriorityLabel("  NORMAL  "), "medium");
 });
 
 test("normalizePriorityLabel rejects unknown values", () => {
   assert.throws(() => normalizePriorityLabel("urgent"));
+  assert.throws(() => normalizePriorityLabel(""));
+  assert.throws(() => normalizePriorityLabel("criticality"));
 });
 
 test("validateScenarioDefinition rejects templated seeded branches", () => {

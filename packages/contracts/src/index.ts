@@ -71,15 +71,24 @@ const PRIORITY_ALIASES = new Map<string, Priority>([
   ["sev0", "critical"],
   ["high", "high"],
   ["p1", "high"],
+  ["sev1", "high"],
   ["medium", "medium"],
   ["normal", "medium"],
   ["default", "medium"],
+  ["p2", "medium"],
+  ["sev2", "medium"],
   ["low", "low"],
-  ["p2", "low"]
+  ["p3", "low"],
+  ["sev3", "low"]
 ]);
 
 export function normalizePriorityLabel(label: string): Priority {
-  const normalized = PRIORITY_ALIASES.get(label.toLowerCase());
+  const normalizedLabel = label.trim().toLowerCase().replace(/[\s_-]+/g, "");
+  if (normalizedLabel.length === 0) {
+    throw new Error(`Unknown priority label: ${label}`);
+  }
+
+  const normalized = PRIORITY_ALIASES.get(normalizedLabel);
   if (!normalized) {
     throw new Error(`Unknown priority label: ${label}`);
   }
