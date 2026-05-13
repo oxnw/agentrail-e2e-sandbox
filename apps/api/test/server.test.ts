@@ -37,6 +37,22 @@ test("GET /benchmarks/:id returns a benchmark task", async (t) => {
   assert.equal(body.data.scenarioId, "golden-open");
 });
 
+test("GET /benchmarks/:id accepts a trailing slash", async (t) => {
+  const server = createServer();
+  server.listen(0, "127.0.0.1");
+  await once(server, "listening");
+  t.after(() => {
+    server.close();
+  });
+
+  const address = server.address() as AddressInfo;
+  const response = await fetch(`http://127.0.0.1:${address.port}/benchmarks/bm_api_benchmark_endpoint/`);
+  const body = await response.json();
+
+  assert.equal(response.status, 200);
+  assert.equal(body.data.id, "bm_api_benchmark_endpoint");
+});
+
 test("GET /benchmarks/:id returns 404 for unknown tasks", async (t) => {
   const server = createServer();
   server.listen(0, "127.0.0.1");

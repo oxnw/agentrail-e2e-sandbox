@@ -65,6 +65,21 @@ export interface TaskSnapshot {
   rollbackEligible: boolean;
 }
 
+export interface ApiError {
+  code: string;
+  message: string;
+}
+
+export interface ApiSuccessResponse<T> {
+  data: T;
+}
+
+export interface ApiErrorResponse {
+  error: ApiError;
+}
+
+export type ApiResponse<T> = ApiSuccessResponse<T> | ApiErrorResponse;
+
 const PRIORITY_ALIASES = new Map<string, Priority>([
   ["critical", "critical"],
   ["p0", "critical"],
