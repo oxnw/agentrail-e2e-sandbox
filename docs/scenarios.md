@@ -52,6 +52,7 @@ Use this for end-to-end validation of new AgentRail functionality including:
 - submit
 - CI read
 - review read
+- managed-runner-parent-commit-2026-05-16: validates that AgentRail commits validated managed-runner worktree changes after a Codex handoff
 - ship
 - rollback
 
