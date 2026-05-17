@@ -52,6 +52,7 @@ Use this for end-to-end validation of new AgentRail functionality including:
 - submit
 - CI read
 - review read
+- lifecycle freshness after fix submissions
 - ship
 - rollback
 
