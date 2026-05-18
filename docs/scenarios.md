@@ -49,6 +49,7 @@ Use this when validating flaky hints from reruns or prior successful attempts on
 Use this for end-to-end validation of new AgentRail functionality including:
 
 - issue intake
+- Linear-origin issue intake
 - submit
 - CI read
 - review read
