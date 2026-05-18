@@ -244,6 +244,39 @@
         "ci_observation": 0.25,
         "artifact_quality": 0.2
       }
+    },
+    {
+      "id": "bm_github_runner_lifecycle_reliability",
+      "title": "Verify runner lifecycle reliability for GitHub issue intake",
+      "issueSlug": "benchmark-github-runner-lifecycle-reliability",
+      "scenarioId": "scratch-live-cycle",
+      "priority": "medium",
+      "packages": [
+        "packages/task-engine"
+      ],
+      "taskType": "live_validation",
+      "acceptanceCriteria": [
+        "GitHub issue intake starts an AgentRail-managed runner for issue #85.",
+        "The managed runner records progress and completion reports for the run.",
+        "AgentRail opens a pull request for the validated runner output."
+      ],
+      "expectedChangedPaths": [
+        "benchmarks/catalog.json"
+      ],
+      "requiredChecks": [
+        "CI / Unit Tests",
+        "Lint / Repo Checks"
+      ],
+      "requiredArtifacts": [
+        "pull_request",
+        "test_evidence"
+      ],
+      "scoring": {
+        "intake_routing": 0.3,
+        "runner_lifecycle": 0.3,
+        "reporting": 0.2,
+        "artifact_quality": 0.2
+      }
     }
   ]
 }
