@@ -55,6 +55,7 @@ Use this for end-to-end validation of new AgentRail functionality including:
 - Contract freshness E2E marker.
 - ship
 - rollback
+- AgentRail-managed runs keep validation scoped to disposable branches.
 
 ## Mapping to AgentRail env vars
 
