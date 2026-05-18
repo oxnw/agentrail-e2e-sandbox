@@ -56,6 +56,7 @@ Use this for end-to-end validation of new AgentRail functionality including:
 - ship
 - rollback
 - AgentRail-managed runs keep validation scoped to disposable branches.
+- circleci-cache-followup: managed runners preserve CircleCI polling freshness after workflows finish.
 
 ## Mapping to AgentRail env vars
 
