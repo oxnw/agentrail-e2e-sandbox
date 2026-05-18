@@ -54,6 +54,7 @@ Use this for end-to-end validation of new AgentRail functionality including:
 - review read
 - ship
 - rollback
+- AgentRail-managed runs keep validation scoped to disposable branches.
 
 ## Mapping to AgentRail env vars
 
