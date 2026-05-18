@@ -43,7 +43,7 @@ npm test
 - `golden-open`: open PR with green CI and approved review
 - `failing-open`: open PR with deterministic failing CI and requested changes
 - `flaky-open`: open PR with rerun or prior-pass history for flaky hints
-- `scratch-live-cycle`: disposable lane for intake, submit, ship, rollback, and cleanup
+- `scratch-live-cycle`: disposable lane for intake, submit, ship into `integration/live`, rollback, and cleanup
 
 ## Benchmark model
 
