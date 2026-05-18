@@ -211,6 +211,39 @@
         "cross_package_safety": 0.2,
         "artifact_quality": 0.1
       }
+    },
+    {
+      "id": "bm_linear_ci_projection",
+      "title": "Project CI readiness for Linear issue intake",
+      "issueSlug": "benchmark-linear-ci-projection",
+      "scenarioId": "scratch-live-cycle",
+      "priority": "low",
+      "packages": [
+        "packages/task-engine"
+      ],
+      "taskType": "live_validation",
+      "acceptanceCriteria": [
+        "Linear intake tasks route to the scratch live-cycle scenario.",
+        "AgentRail opens a pull request for the managed runner output.",
+        "Passing GitHub Actions checks mark the task shippable."
+      ],
+      "expectedChangedPaths": [
+        "benchmarks/catalog.json"
+      ],
+      "requiredChecks": [
+        "CI / Unit Tests",
+        "Lint / Repo Checks"
+      ],
+      "requiredArtifacts": [
+        "pull_request",
+        "ship_candidate"
+      ],
+      "scoring": {
+        "routing": 0.3,
+        "runner_wakeup": 0.25,
+        "ci_observation": 0.25,
+        "artifact_quality": 0.2
+      }
     }
   ]
 }
