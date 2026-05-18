@@ -1,5 +1,5 @@
 import http from "node:http";
-import { getBenchmarkTask, getScenario, buildTaskSnapshots } from "./fixtures.js";
+import { getBenchmarkTask, getScenario, buildTaskSnapshots, listScenarios } from "./fixtures.js";
 
 function json(res: http.ServerResponse, status: number, body: unknown) {
   res.writeHead(status, { "content-type": "application/json" });
@@ -16,6 +16,10 @@ export function createServer() {
 
     if (req.method === "GET" && url.pathname === "/tasks") {
       return json(res, 200, { data: buildTaskSnapshots() });
+    }
+
+    if (req.method === "GET" && url.pathname === "/scenarios") {
+      return json(res, 200, { data: listScenarios() });
     }
 
     const benchmarkMatch = req.method === "GET" ? url.pathname.match(/^\/benchmarks\/([^/]+)$/) : null;
