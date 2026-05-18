@@ -28,6 +28,8 @@ The sandbox is driven by two checked-in manifests:
 
 Read [docs/scenarios.md](docs/scenarios.md) for the canonical seeded scenario metadata and how it maps onto the `AGENTRAIL_SANDBOX_*` environment variables used by AgentRail's live smoke scripts.
 
+Managed AgentRail runners preserve CI provider wiring across pull request submission, so submitted PRs continue to report against the same configured checks.
+
 ## Usage
 
 ```bash
