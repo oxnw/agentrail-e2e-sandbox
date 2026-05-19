@@ -10,6 +10,7 @@ test("normalizePriorityLabel maps aliases", () => {
   assert.equal(normalizePriorityLabel("major"), "high");
   assert.equal(normalizePriorityLabel("sev1"), "high");
   assert.equal(normalizePriorityLabel("default"), "medium");
+  assert.equal(normalizePriorityLabel("linear-e2e-57"), "medium");
   assert.equal(normalizePriorityLabel("review-e2e-bot"), "medium");
   assert.equal(normalizePriorityLabel("review-e2e-followup"), "medium");
   assert.equal(normalizePriorityLabel("p2"), "low");
