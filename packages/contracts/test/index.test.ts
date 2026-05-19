@@ -14,6 +14,7 @@ test("normalizePriorityLabel maps aliases", () => {
   assert.equal(normalizePriorityLabel("linear-e2e-57-sync"), "medium");
   assert.equal(normalizePriorityLabel("review-e2e-bot"), "medium");
   assert.equal(normalizePriorityLabel("review-e2e-followup"), "medium");
+  assert.equal(normalizePriorityLabel("circleci-e2e-58-20260519T170403Z"), "medium");
   assert.equal(normalizePriorityLabel("p2"), "low");
 });
 
