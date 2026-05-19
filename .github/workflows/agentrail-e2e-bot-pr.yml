@@ -1,0 +1,44 @@
+name: AgentRail E2E Bot PR
+
+on:
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: Branch name to create
+        required: true
+      title:
+        description: Pull request title
+        required: true
+      body:
+        description: Pull request body
+        required: true
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  create-pr:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ github.token }}
+      - name: Create bot-authored placeholder pull request
+        env:
+          GH_TOKEN: ${{ github.token }}
+          BRANCH: ${{ inputs.branch }}
+          TITLE: ${{ inputs.title }}
+          BODY: ${{ inputs.body }}
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout -b "$BRANCH"
+          mkdir -p .agentrail-e2e
+          printf 'AgentRail E2E bot PR placeholder for %s
+' "$BRANCH" > ".agentrail-e2e/$(echo "$BRANCH" | tr '/:' '__').txt"
+          git add .agentrail-e2e
+          git commit -m "test: create AgentRail E2E placeholder branch"
+          git push origin "$BRANCH"
+          gh pr create --repo "$GITHUB_REPOSITORY" --head "$BRANCH" --base "main" --title "$TITLE" --body "$BODY"
