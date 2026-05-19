@@ -78,6 +78,8 @@ const PRIORITY_ALIASES = new Map<string, Priority>([
   ["medium", "medium"],
   ["normal", "medium"],
   ["default", "medium"],
+  ["review-e2e-bot", "medium"],
+  ["review-e2e-followup", "medium"],
   ["low", "low"],
   ["p2", "low"]
 ]);
