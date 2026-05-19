@@ -1,17 +1,20 @@
 name: AgentRail E2E Bot PR
 
-on:
+"on":
   workflow_dispatch:
     inputs:
       branch:
         description: Branch name to create
         required: true
+        type: string
       title:
         description: Pull request title
         required: true
+        type: string
       body:
         description: Pull request body
         required: true
+        type: string
 
 permissions:
   contents: write
@@ -36,8 +39,8 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git checkout -b "$BRANCH"
           mkdir -p .agentrail-e2e
-          printf 'AgentRail E2E bot PR placeholder for %s
-' "$BRANCH" > ".agentrail-e2e/$(echo "$BRANCH" | tr '/:' '__').txt"
+          SAFE_BRANCH=$(printf '%s' "$BRANCH" | tr '/:' '__')
+          printf 'AgentRail E2E bot PR placeholder for %s\n' "$BRANCH" > ".agentrail-e2e/${SAFE_BRANCH}.txt"
           git add .agentrail-e2e
           git commit -m "test: create AgentRail E2E placeholder branch"
           git push origin "$BRANCH"
