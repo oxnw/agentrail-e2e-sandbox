@@ -10,6 +10,7 @@ test("normalizePriorityLabel maps aliases", () => {
   assert.equal(normalizePriorityLabel("major"), "high");
   assert.equal(normalizePriorityLabel("sev1"), "high");
   assert.equal(normalizePriorityLabel("default"), "medium");
+  assert.equal(normalizePriorityLabel("review-e2e"), "medium");
   assert.equal(normalizePriorityLabel("p2"), "low");
 });
 
