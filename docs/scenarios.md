@@ -50,6 +50,7 @@ Use this for end-to-end validation of new AgentRail functionality including:
 
 - issue intake
 - submit
+- Repeated approval before CI E2E marker
 - CI read
 - review read
 - Contract freshness E2E marker.
