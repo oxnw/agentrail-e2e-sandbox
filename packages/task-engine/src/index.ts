@@ -17,6 +17,10 @@ export function deriveReviewGate({
     return { status: "todo", availableActions: ["submit", "view_review_feedback"] };
   }
 
+  if (ciStatus === "flaky") {
+    return { status: "in_review", availableActions: ["rerun_ci", "view_ci_status"] };
+  }
+
   if (ciStatus === "passed" && reviewOutcome === "approved") {
     return {
       status: "ready_to_ship",
