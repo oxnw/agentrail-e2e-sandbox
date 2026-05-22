@@ -1,10 +1,26 @@
 import benchmarkCatalog from "../../../benchmarks/catalog.json" with { type: "json" };
 import scenarioManifest from "../../../scenarios/manifest.json" with { type: "json" };
-import type { BenchmarkCatalog, ScenarioManifest, TaskSnapshot } from "../../../packages/contracts/src/index.js";
+import type { BenchmarkCatalog, Priority, ScenarioManifest, TaskSnapshot, TaskStatus } from "../../../packages/contracts/src/index.js";
 import { buildTaskSnapshot } from "../../../packages/task-engine/src/index.js";
 
 const catalog = benchmarkCatalog as unknown as BenchmarkCatalog;
 const manifest = scenarioManifest as unknown as ScenarioManifest;
+
+export const taskStatuses = ["todo", "in_review", "ready_to_ship"] as const satisfies readonly TaskStatus[];
+export const taskPriorities = ["critical", "high", "medium", "low"] as const satisfies readonly Priority[];
+
+export interface TaskSnapshotFilters {
+  status?: TaskStatus;
+  priority?: Priority;
+}
+
+export function isTaskStatus(value: string): value is TaskStatus {
+  return taskStatuses.includes(value as TaskStatus);
+}
+
+export function isTaskPriority(value: string): value is Priority {
+  return taskPriorities.includes(value as Priority);
+}
 
 export function listScenarios() {
   return manifest.scenarios;
@@ -24,4 +40,16 @@ export function getBenchmarkTask(id: string) {
 
 export function buildTaskSnapshots(): TaskSnapshot[] {
   return catalog.tasks.map((task) => buildTaskSnapshot({ task, scenario: getScenario(task.scenarioId) }));
+}
+
+export function listTaskSnapshots(filters: TaskSnapshotFilters = {}): TaskSnapshot[] {
+  return buildTaskSnapshots().filter((task) => {
+    if (filters.status && task.status !== filters.status) {
+      return false;
+    }
+    if (filters.priority && task.priority !== filters.priority) {
+      return false;
+    }
+    return true;
+  });
 }
