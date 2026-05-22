@@ -73,3 +73,57 @@ test("GET /tasks returns scenario-aware task snapshots", async (t) => {
   assert.equal(goldenTask.status, "ready_to_ship");
   assert.equal(goldenTask.availableActions.includes("ship"), false);
 });
+
+test("GET /tasks/:id returns the matching task snapshot", async (t) => {
+  const server = createServer();
+  server.listen(0, "127.0.0.1");
+  await once(server, "listening");
+  t.after(() => {
+    server.close();
+  });
+
+  const address = server.address() as AddressInfo;
+  const baseUrl = `http://127.0.0.1:${address.port}`;
+  const listResponse = await fetch(`${baseUrl}/tasks`);
+  const listBody = await listResponse.json();
+  const response = await fetch(`${baseUrl}/tasks/bm_api_task_detail`);
+  const body = await response.json();
+
+  assert.equal(response.status, 200);
+  assert.deepEqual(
+    body.data,
+    listBody.data.find((task: { id: string }) => task.id === "bm_api_task_detail")
+  );
+});
+
+test("GET /tasks/:id returns 404 JSON for unknown task ids", async (t) => {
+  const server = createServer();
+  server.listen(0, "127.0.0.1");
+  await once(server, "listening");
+  t.after(() => {
+    server.close();
+  });
+
+  const address = server.address() as AddressInfo;
+  const response = await fetch(`http://127.0.0.1:${address.port}/tasks/missing`);
+  const body = await response.json();
+
+  assert.equal(response.status, 404);
+  assert.deepEqual(body.error, { code: "not_found", message: "Task was not found." });
+});
+
+test("GET /tasks/summary is not shadowed by the task detail route", async (t) => {
+  const server = createServer();
+  server.listen(0, "127.0.0.1");
+  await once(server, "listening");
+  t.after(() => {
+    server.close();
+  });
+
+  const address = server.address() as AddressInfo;
+  const response = await fetch(`http://127.0.0.1:${address.port}/tasks/summary`);
+  const body = await response.json();
+
+  assert.equal(response.status, 404);
+  assert.deepEqual(body.error, { code: "not_found", message: "Route was not found." });
+});
