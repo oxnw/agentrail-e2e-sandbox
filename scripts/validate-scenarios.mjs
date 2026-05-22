@@ -51,6 +51,9 @@ for (const scenario of manifest.scenarios) {
     requirePositiveInteger(scenario.live.issueNumber, `scenario.live.issueNumber for ${scenario.id}`);
     requirePositiveInteger(scenario.live.pullNumber, `scenario.live.pullNumber for ${scenario.id}`);
     requireString(scenario.live.headBranch, `scenario.live.headBranch for ${scenario.id}`);
+    if (scenario.live.headBranch !== scenario.branch) {
+      throw new Error(`Seeded scenario ${scenario.id} live.headBranch must match scenario.branch.`);
+    }
   } else {
     optionalPositiveInteger(scenario.live.issueNumber, `scenario.live.issueNumber for ${scenario.id}`);
     optionalPositiveInteger(scenario.live.pullNumber, `scenario.live.pullNumber for ${scenario.id}`);
