@@ -1,5 +1,5 @@
 import http from "node:http";
-import { getBenchmarkTask, getScenario, buildTaskSnapshots } from "./fixtures.js";
+import { getBenchmarkDetail, getScenario, buildTaskSnapshots } from "./fixtures.js";
 
 function json(res: http.ServerResponse, status: number, body: unknown) {
   res.writeHead(status, { "content-type": "application/json" });
@@ -20,11 +20,11 @@ export function createServer() {
 
     const benchmarkMatch = req.method === "GET" ? url.pathname.match(/^\/benchmarks\/([^/]+)$/) : null;
     if (benchmarkMatch) {
-      const task = getBenchmarkTask(benchmarkMatch[1]);
-      if (!task) {
+      const benchmark = getBenchmarkDetail(benchmarkMatch[1]);
+      if (!benchmark) {
         return json(res, 404, { error: { code: "not_found", message: "Benchmark task was not found." } });
       }
-      return json(res, 200, { data: task });
+      return json(res, 200, { data: benchmark });
     }
 
     const scenarioMatch = req.method === "GET" ? url.pathname.match(/^\/scenarios\/([^/]+)$/) : null;

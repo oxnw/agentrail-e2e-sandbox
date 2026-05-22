@@ -1,69 +1,79 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { once } from "node:events";
-import type { AddressInfo } from "node:net";
+import type http from "node:http";
 import { createServer } from "../src/server.js";
 
-test("GET /health returns service status", async (t) => {
+async function request(path: string, method = "GET") {
   const server = createServer();
-  server.listen(0, "127.0.0.1");
-  await once(server, "listening");
-  t.after(() => {
-    server.close();
-  });
+  const handler = server.listeners("request")[0] as (req: http.IncomingMessage, res: http.ServerResponse) => void;
 
-  const address = server.address() as AddressInfo;
-  const response = await fetch(`http://127.0.0.1:${address.port}/health`);
-  const body = await response.json();
+  return await new Promise<{ status: number; body: any }>((resolve) => {
+    let status = 0;
+    const req = { method, url: path } as http.IncomingMessage;
+    const res = {
+      writeHead(nextStatus: number) {
+        status = nextStatus;
+        return res;
+      },
+      end(payload: string) {
+        server.close();
+        resolve({ status, body: JSON.parse(payload) });
+      }
+    } as unknown as http.ServerResponse;
+
+    handler(req, res);
+  });
+}
+
+test("GET /health returns service status", async () => {
+  const response = await request("/health");
 
   assert.equal(response.status, 200);
-  assert.equal(body.status, "ok");
+  assert.equal(response.body.status, "ok");
 });
 
-test("GET /benchmarks/:id returns a benchmark task", async (t) => {
-  const server = createServer();
-  server.listen(0, "127.0.0.1");
-  await once(server, "listening");
-  t.after(() => {
-    server.close();
-  });
-
-  const address = server.address() as AddressInfo;
-  const response = await fetch(`http://127.0.0.1:${address.port}/benchmarks/bm_api_benchmark_endpoint`);
-  const body = await response.json();
+test("GET /benchmarks/:id returns a benchmark task", async () => {
+  const response = await request("/benchmarks/bm_api_benchmark_endpoint");
+  const body = response.body;
 
   assert.equal(response.status, 200);
   assert.equal(body.data.id, "bm_api_benchmark_endpoint");
+  assert.equal(body.data.title, "Expose benchmark task details through the API");
+  assert.equal(body.data.priority, "medium");
+  assert.deepEqual(body.data.packages, ["apps/api", "packages/contracts"]);
+  assert.equal(body.data.taskType, "feature");
+  assert.ok(body.data.acceptanceCriteria.includes("API returns benchmark task metadata by id."));
   assert.equal(body.data.scenarioId, "golden-open");
+  assert.equal(body.data.scenarioKind, "seeded");
+  assert.equal(body.data.expectedCiStatus, "passed");
+  assert.equal(body.data.expectedReviewOutcome, "approved");
+  assert.equal(body.data.rollbackEligible, false);
 });
 
-test("GET /benchmarks/:id returns 404 for unknown tasks", async (t) => {
-  const server = createServer();
-  server.listen(0, "127.0.0.1");
-  await once(server, "listening");
-  t.after(() => {
-    server.close();
-  });
+test("GET /benchmarks/:id includes rollback eligibility from the scenario manifest", async () => {
+  const response = await request("/benchmarks/bm_crosspkg_rollback_audit");
+  const body = response.body;
 
-  const address = server.address() as AddressInfo;
-  const response = await fetch(`http://127.0.0.1:${address.port}/benchmarks/missing`);
-  const body = await response.json();
+  assert.equal(response.status, 200);
+  assert.equal(body.data.id, "bm_crosspkg_rollback_audit");
+  assert.equal(body.data.scenarioId, "scratch-live-cycle");
+  assert.equal(body.data.scenarioKind, "scratch");
+  assert.equal(body.data.expectedCiStatus, "variable");
+  assert.equal(body.data.expectedReviewOutcome, "variable");
+  assert.equal(body.data.rollbackEligible, true);
+});
+
+test("GET /benchmarks/:id returns 404 for unknown tasks", async () => {
+  const response = await request("/benchmarks/missing");
+  const body = response.body;
 
   assert.equal(response.status, 404);
   assert.equal(body.error.code, "not_found");
 });
 
-test("GET /tasks returns scenario-aware task snapshots", async (t) => {
-  const server = createServer();
-  server.listen(0, "127.0.0.1");
-  await once(server, "listening");
-  t.after(() => {
-    server.close();
-  });
-
-  const address = server.address() as AddressInfo;
-  const response = await fetch(`http://127.0.0.1:${address.port}/tasks`);
-  const body = await response.json();
+test("GET /tasks returns scenario-aware task snapshots", async () => {
+  const response = await request("/tasks");
+  const body = response.body;
 
   assert.equal(response.status, 200);
   assert.ok(Array.isArray(body.data));
