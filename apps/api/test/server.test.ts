@@ -73,3 +73,60 @@ test("GET /tasks returns scenario-aware task snapshots", async (t) => {
   assert.equal(goldenTask.status, "ready_to_ship");
   assert.equal(goldenTask.availableActions.includes("ship"), false);
 });
+
+test("GET /tasks/:id returns a task snapshot matching the task list shape", async (t) => {
+  const server = createServer();
+  server.listen(0, "127.0.0.1");
+  await once(server, "listening");
+  t.after(() => {
+    server.close();
+  });
+
+  const address = server.address() as AddressInfo;
+  const listResponse = await fetch(`http://127.0.0.1:${address.port}/tasks`);
+  const listBody = await listResponse.json();
+  const response = await fetch(`http://127.0.0.1:${address.port}/tasks/bm_api_task_detail`);
+  const body = await response.json();
+
+  assert.equal(response.status, 200);
+  assert.deepEqual(
+    body.data,
+    listBody.data.find((task: { id: string }) => task.id === "bm_api_task_detail")
+  );
+  assert.equal(body.data.id, "bm_api_task_detail");
+  assert.equal(body.data.scenarioId, "failing-open");
+});
+
+test("GET /tasks/:id returns 404 JSON for unknown task ids", async (t) => {
+  const server = createServer();
+  server.listen(0, "127.0.0.1");
+  await once(server, "listening");
+  t.after(() => {
+    server.close();
+  });
+
+  const address = server.address() as AddressInfo;
+  const response = await fetch(`http://127.0.0.1:${address.port}/tasks/missing`);
+  const body = await response.json();
+
+  assert.equal(response.status, 404);
+  assert.equal(body.error.code, "not_found");
+  assert.equal(body.error.message, "Task was not found.");
+});
+
+test("GET /tasks/summary is not shadowed by task detail lookup", async (t) => {
+  const server = createServer();
+  server.listen(0, "127.0.0.1");
+  await once(server, "listening");
+  t.after(() => {
+    server.close();
+  });
+
+  const address = server.address() as AddressInfo;
+  const response = await fetch(`http://127.0.0.1:${address.port}/tasks/summary`);
+  const body = await response.json();
+
+  assert.equal(response.status, 404);
+  assert.equal(body.error.code, "not_found");
+  assert.equal(body.error.message, "Route was not found.");
+});
