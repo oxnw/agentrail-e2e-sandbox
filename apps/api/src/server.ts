@@ -1,9 +1,20 @@
 import http from "node:http";
-import { getBenchmarkTask, getScenario, buildTaskSnapshots } from "./fixtures.js";
+import type { Priority, TaskStatus } from "../../../packages/contracts/src/index.js";
+import { getBenchmarkTask, getScenario, filterTaskSnapshots, TASK_PRIORITIES, TASK_STATUSES } from "./fixtures.js";
 
 function json(res: http.ServerResponse, status: number, body: unknown) {
   res.writeHead(status, { "content-type": "application/json" });
   res.end(JSON.stringify(body));
+}
+
+function validateFilter<T extends string>(name: string, value: string | null, allowedValues: readonly T[]): T | undefined {
+  if (value === null) {
+    return undefined;
+  }
+  if (allowedValues.includes(value as T)) {
+    return value as T;
+  }
+  throw new Error(`Unsupported ${name} filter value: ${value}`);
 }
 
 export function createServer() {
@@ -15,7 +26,22 @@ export function createServer() {
     }
 
     if (req.method === "GET" && url.pathname === "/tasks") {
-      return json(res, 200, { data: buildTaskSnapshots() });
+      let status: TaskStatus | undefined;
+      let priority: Priority | undefined;
+
+      try {
+        status = validateFilter("status", url.searchParams.get("status"), TASK_STATUSES);
+        priority = validateFilter("priority", url.searchParams.get("priority"), TASK_PRIORITIES);
+      } catch (error) {
+        return json(res, 400, {
+          error: {
+            code: "invalid_filter",
+            message: error instanceof Error ? error.message : "Unsupported task filter value."
+          }
+        });
+      }
+
+      return json(res, 200, { data: filterTaskSnapshots({ status, priority }) });
     }
 
     const benchmarkMatch = req.method === "GET" ? url.pathname.match(/^\/benchmarks\/([^/]+)$/) : null;
