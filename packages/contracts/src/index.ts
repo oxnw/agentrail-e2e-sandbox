@@ -113,7 +113,7 @@ export function validateScenarioDefinition(scenario: ScenarioDefinition) {
     requireLiveInteger(scenario.id, "pullNumber", scenario.live.pullNumber);
     requireLiveString(scenario.id, "headBranch", scenario.live.headBranch);
     if (scenario.live.headBranch !== scenario.branch) {
-      throw new Error(`Seeded scenario ${scenario.id} live.headBranch must match branch.`);
+      throw new Error(`Seeded scenario ${scenario.id} live.headBranch (${scenario.live.headBranch}) must match branch (${scenario.branch}).`);
     }
   } else {
     optionalLiveInteger(scenario.id, "issueNumber", scenario.live.issueNumber);

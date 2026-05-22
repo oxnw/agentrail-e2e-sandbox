@@ -89,7 +89,7 @@ test("validateScenarioDefinition rejects seeded live head branch mismatches", ()
       headBranch: "scenario/different-branch"
     },
     notes: "mismatched"
-  }), /seeded-mismatched-live-branch/);
+  }), /seeded-mismatched-live-branch.*scenario\/different-branch.*scenario\/seeded-mismatched-live-branch/);
 });
 
 test("validateScenarioDefinition allows scratch branch templates", () => {
