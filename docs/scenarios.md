@@ -70,4 +70,4 @@ For live smoke scripts, seeded scenarios should provide canonical values for:
 
 The scratch scenario is a template. It should define canonical `owner` and `repo`, while per-run issue number, pull number, and head branch may still be supplied via explicit env overrides.
 
-Linear-origin sandbox tasks use the same scratch intake path; TES-6 records this note as proof that AgentRail can ingest a Linear issue and hand it to a managed agent run.
+Linear-origin sandbox tasks use the same scratch intake path. TES-6 records this note as proof that AgentRail can ingest a Linear issue and hand it to a managed agent run for validation.
