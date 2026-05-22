@@ -8,6 +8,13 @@ test("deriveReviewGate blocks ship when CI is failing", () => {
   assert.deepEqual(result.availableActions, ["submit", "view_ci_status"]);
 });
 
+test("deriveReviewGate treats flaky CI as retryable in-review work", () => {
+  const result = deriveReviewGate({ ciStatus: "flaky", reviewOutcome: "approved" });
+  assert.equal(result.status, "in_review");
+  assert.deepEqual(result.availableActions, ["rerun_ci", "view_ci_status"]);
+  assert.equal(result.availableActions.includes("ship"), false);
+});
+
 test("deriveReviewGate exposes ship for passed and approved state", () => {
   const result = deriveReviewGate({ ciStatus: "passed", reviewOutcome: "approved" });
   assert.equal(result.status, "ready_to_ship");
@@ -101,4 +108,48 @@ test("buildTaskSnapshot keeps seeded ready state while suppressing ship action",
 
   assert.equal(snapshot.status, "ready_to_ship");
   assert.deepEqual(snapshot.availableActions, ["view_ci_status", "view_review_feedback"]);
+});
+
+test("buildTaskSnapshot exposes retry actions for flaky CI without ship", () => {
+  const snapshot = buildTaskSnapshot({
+    task: {
+      id: "bm_review_gate_flaky_ci",
+      title: "Treat flaky CI as retryable but not shippable",
+      issueSlug: "benchmark-review-gate-flaky-ci",
+      scenarioId: "flaky-open",
+      priority: "medium",
+      packages: ["packages/task-engine"],
+      taskType: "logic_fix",
+      acceptanceCriteria: ["x"],
+      expectedChangedPaths: ["packages/task-engine/src/index.ts"],
+      requiredChecks: ["Task-engine unit tests"],
+      requiredArtifacts: ["pull_request"],
+      scoring: { correctness: 1 }
+    },
+    scenario: {
+      id: "flaky-open",
+      kind: "seeded",
+      issueSlug: "benchmark-rerun-flaky-sync",
+      branch: "scenario/flaky-open",
+      baseBranch: "main",
+      shipTargetBranch: "integration/live",
+      expectedCiStatus: "flaky",
+      expectedReviewOutcome: "approved",
+      allowSubmit: true,
+      allowShip: true,
+      allowRollback: false,
+      live: {
+        owner: "oxnw",
+        repo: "agentrail-e2e-sandbox",
+        issueNumber: 2,
+        pullNumber: 2,
+        headBranch: "scenario/flaky-open"
+      },
+      notes: "flaky"
+    }
+  });
+
+  assert.equal(snapshot.status, "in_review");
+  assert.deepEqual(snapshot.availableActions, ["rerun_ci", "view_ci_status"]);
+  assert.equal(snapshot.availableActions.includes("ship"), false);
 });
