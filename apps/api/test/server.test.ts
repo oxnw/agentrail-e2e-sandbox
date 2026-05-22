@@ -79,7 +79,7 @@ test("GET /tasks returns scenario-aware task snapshots", () => {
   assert.equal(response.status, 200);
   assert.ok(Array.isArray(body.data));
   assert.ok(body.data.some((task: { id: string }) => task.id === "bm_crosspkg_rollback_audit"));
-  const goldenTask = body.data.find((task: { scenarioId: string }) => task.scenarioId === "golden-open");
+  const goldenTask = body.data.find((task: { scenarioId: string }) => task.scenarioId === "golden-open") ?? null;
   assert.ok(goldenTask);
   assert.equal(goldenTask.status, "ready_to_ship");
   assert.equal(goldenTask.availableActions.includes("ship"), false);
