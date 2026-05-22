@@ -75,6 +75,7 @@ const PRIORITY_ALIASES = new Map<string, Priority>([
   ["major", "high"],
   ["p1", "high"],
   ["sev1", "high"],
+  ["vip", "high"],
   ["medium", "medium"],
   ["normal", "medium"],
   ["default", "medium"],
