@@ -62,6 +62,7 @@ export interface TaskSnapshot {
   status: TaskStatus;
   priority: Priority;
   availableActions: string[];
+  reviewRequired: boolean;
   rollbackEligible: boolean;
 }
 
