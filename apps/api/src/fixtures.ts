@@ -22,6 +22,22 @@ export function getBenchmarkTask(id: string) {
   return catalog.tasks.find((task) => task.id === id) ?? null;
 }
 
+export function getBenchmarkTaskDetail(id: string) {
+  const task = getBenchmarkTask(id);
+  if (!task) {
+    return null;
+  }
+
+  const scenario = getScenario(task.scenarioId);
+  return {
+    ...task,
+    scenarioKind: scenario?.kind ?? null,
+    expectedCiStatus: scenario?.expectedCiStatus ?? "variable",
+    expectedReviewOutcome: scenario?.expectedReviewOutcome ?? "variable",
+    rollbackEligible: Boolean(scenario?.allowRollback)
+  };
+}
+
 export function buildTaskSnapshots(): TaskSnapshot[] {
   return catalog.tasks.map((task) => buildTaskSnapshot({ task, scenario: getScenario(task.scenarioId) }));
 }
