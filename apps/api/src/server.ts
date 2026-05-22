@@ -1,5 +1,9 @@
 import http from "node:http";
 import { getBenchmarkTask, getScenario, buildTaskSnapshots } from "./fixtures.js";
+import type { Priority, TaskStatus } from "../../../packages/contracts/src/index.js";
+
+const TASK_STATUSES = new Set<TaskStatus>(["todo", "in_review", "ready_to_ship"]);
+const TASK_PRIORITIES = new Set<Priority>(["critical", "high", "medium", "low"]);
 
 function json(res: http.ServerResponse, status: number, body: unknown) {
   res.writeHead(status, { "content-type": "application/json" });
@@ -15,7 +19,27 @@ export function createServer() {
     }
 
     if (req.method === "GET" && url.pathname === "/tasks") {
-      return json(res, 200, { data: buildTaskSnapshots() });
+      const status = url.searchParams.get("status");
+      const priority = url.searchParams.get("priority");
+
+      if (status !== null && !isTaskStatus(status)) {
+        return json(res, 400, {
+          error: { code: "invalid_filter", message: `Unsupported status filter: ${status}` }
+        });
+      }
+
+      if (priority !== null && !isPriority(priority)) {
+        return json(res, 400, {
+          error: { code: "invalid_filter", message: `Unsupported priority filter: ${priority}` }
+        });
+      }
+
+      return json(res, 200, {
+        data: buildTaskSnapshots({
+          status: status ?? undefined,
+          priority: priority ?? undefined
+        })
+      });
     }
 
     const benchmarkMatch = req.method === "GET" ? url.pathname.match(/^\/benchmarks\/([^/]+)$/) : null;
@@ -38,4 +62,12 @@ export function createServer() {
 
     return json(res, 404, { error: { code: "not_found", message: "Route was not found." } });
   });
+}
+
+function isTaskStatus(value: string): value is TaskStatus {
+  return TASK_STATUSES.has(value as TaskStatus);
+}
+
+function isPriority(value: string): value is Priority {
+  return TASK_PRIORITIES.has(value as Priority);
 }
