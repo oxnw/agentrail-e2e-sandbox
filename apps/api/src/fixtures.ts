@@ -21,6 +21,11 @@ export interface BenchmarkDetail extends BenchmarkTask {
   rollbackEligible: boolean;
 }
 
+type BenchmarkScenarioSummary = Pick<
+  BenchmarkDetail,
+  "scenarioKind" | "expectedCiStatus" | "expectedReviewOutcome" | "rollbackEligible"
+>;
+
 export function listScenarios() {
   return manifest.scenarios;
 }
@@ -37,20 +42,26 @@ export function getBenchmarkTask(id: string) {
   return catalog.tasks.find((task) => task.id === id) ?? null;
 }
 
+function buildBenchmarkScenarioSummary(scenarioId: string): BenchmarkScenarioSummary {
+  const scenario = getScenario(scenarioId);
+
+  return {
+    scenarioKind: scenario?.kind ?? null,
+    expectedCiStatus: scenario?.expectedCiStatus ?? "variable",
+    expectedReviewOutcome: scenario?.expectedReviewOutcome ?? "variable",
+    rollbackEligible: Boolean(scenario?.allowRollback)
+  };
+}
+
 export function getBenchmarkDetail(id: string): BenchmarkDetail | null {
   const task = getBenchmarkTask(id);
   if (!task) {
     return null;
   }
 
-  const scenario = getScenario(task.scenarioId);
-
   return {
     ...task,
-    scenarioKind: scenario?.kind ?? null,
-    expectedCiStatus: scenario?.expectedCiStatus ?? "variable",
-    expectedReviewOutcome: scenario?.expectedReviewOutcome ?? "variable",
-    rollbackEligible: Boolean(scenario?.allowRollback)
+    ...buildBenchmarkScenarioSummary(task.scenarioId)
   };
 }
 

@@ -40,6 +40,9 @@ test("GET /benchmarks/:id returns a benchmark task", async () => {
   assert.equal(body.data.id, "bm_api_benchmark_endpoint");
   assert.equal(body.data.title, "Expose benchmark task details through the API");
   assert.equal(body.data.priority, "medium");
+  assert.deepEqual(body.data.packages, ["apps/api", "packages/contracts"]);
+  assert.equal(body.data.taskType, "feature");
+  assert.ok(body.data.acceptanceCriteria.includes("API returns benchmark task metadata by id."));
   assert.equal(body.data.scenarioId, "golden-open");
   assert.equal(body.data.scenarioKind, "seeded");
   assert.equal(body.data.expectedCiStatus, "passed");
