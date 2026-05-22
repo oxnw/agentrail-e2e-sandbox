@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { buildTaskSnapshot, deriveReviewGate } from "../src/index.js";
+import { buildTaskSnapshot, buildTaskSummary, deriveReviewGate } from "../src/index.js";
 
 test("deriveReviewGate blocks ship when CI is failing", () => {
   const result = deriveReviewGate({ ciStatus: "failed", reviewOutcome: "approved" });
@@ -101,4 +101,56 @@ test("buildTaskSnapshot keeps seeded ready state while suppressing ship action",
 
   assert.equal(snapshot.status, "ready_to_ship");
   assert.deepEqual(snapshot.availableActions, ["view_ci_status", "view_review_feedback"]);
+});
+
+test("buildTaskSummary counts snapshots by status, priority, and task type", () => {
+  const summary = buildTaskSummary([
+    {
+      id: "one",
+      title: "One",
+      scenarioId: "scenario-one",
+      status: "todo",
+      priority: "high",
+      taskType: "api_feature",
+      availableActions: ["submit"],
+      rollbackEligible: false
+    },
+    {
+      id: "two",
+      title: "Two",
+      scenarioId: "scenario-two",
+      status: "ready_to_ship",
+      priority: "medium",
+      taskType: "api_feature",
+      availableActions: ["ship"],
+      rollbackEligible: true
+    },
+    {
+      id: "three",
+      title: "Three",
+      scenarioId: "scenario-three",
+      status: "todo",
+      priority: "high",
+      taskType: "docs",
+      availableActions: ["submit"],
+      rollbackEligible: false
+    }
+  ]);
+
+  assert.equal(summary.total, 3);
+  assert.deepEqual(summary.byStatus, {
+    todo: 2,
+    in_review: 0,
+    ready_to_ship: 1
+  });
+  assert.deepEqual(summary.byPriority, {
+    critical: 0,
+    high: 2,
+    medium: 1,
+    low: 0
+  });
+  assert.deepEqual(summary.byTaskType, {
+    api_feature: 2,
+    docs: 1
+  });
 });
