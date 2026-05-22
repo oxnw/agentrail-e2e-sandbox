@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { buildTaskSnapshot, deriveReviewGate } from "../src/index.js";
+import { buildTaskSnapshot, deriveReviewGate, summarizeTaskSnapshots } from "../src/index.js";
 
 test("deriveReviewGate blocks ship when CI is failing", () => {
   const result = deriveReviewGate({ ciStatus: "failed", reviewOutcome: "approved" });
@@ -58,6 +58,7 @@ test("buildTaskSnapshot reflects rollback eligibility from scenario", () => {
 
   assert.equal(snapshot.rollbackEligible, true);
   assert.equal(snapshot.priority, "high");
+  assert.equal(snapshot.taskType, "cross_cutting");
 });
 
 test("buildTaskSnapshot keeps seeded ready state while suppressing ship action", () => {
@@ -101,4 +102,56 @@ test("buildTaskSnapshot keeps seeded ready state while suppressing ship action",
 
   assert.equal(snapshot.status, "ready_to_ship");
   assert.deepEqual(snapshot.availableActions, ["view_ci_status", "view_review_feedback"]);
+});
+
+test("summarizeTaskSnapshots counts snapshots by status, priority, and task type", () => {
+  const summary = summarizeTaskSnapshots([
+    {
+      id: "bm_api_a",
+      title: "API A",
+      scenarioId: "golden-open",
+      taskType: "api_feature",
+      status: "ready_to_ship",
+      priority: "high",
+      availableActions: ["view_ci_status"],
+      rollbackEligible: false
+    },
+    {
+      id: "bm_api_b",
+      title: "API B",
+      scenarioId: "review-requested",
+      taskType: "api_feature",
+      status: "todo",
+      priority: "medium",
+      availableActions: ["submit"],
+      rollbackEligible: false
+    },
+    {
+      id: "bm_docs_a",
+      title: "Docs A",
+      scenarioId: "scratch-live-cycle",
+      taskType: "docs",
+      status: "todo",
+      priority: "medium",
+      availableActions: ["submit"],
+      rollbackEligible: true
+    }
+  ]);
+
+  assert.equal(summary.total, 3);
+  assert.deepEqual(summary.byStatus, {
+    todo: 2,
+    in_review: 0,
+    ready_to_ship: 1
+  });
+  assert.deepEqual(summary.byPriority, {
+    critical: 0,
+    high: 1,
+    medium: 2,
+    low: 0
+  });
+  assert.deepEqual(summary.byTaskType, {
+    api_feature: 2,
+    docs: 1
+  });
 });
