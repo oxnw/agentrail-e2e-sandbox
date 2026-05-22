@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { buildTaskSnapshot, deriveReviewGate } from "../src/index.js";
+import { buildTaskSnapshot, deriveReviewGate, summarizeTaskSnapshots } from "../src/index.js";
 
 test("deriveReviewGate blocks ship when CI is failing", () => {
   const result = deriveReviewGate({ ciStatus: "failed", reviewOutcome: "approved" });
@@ -58,6 +58,7 @@ test("buildTaskSnapshot reflects rollback eligibility from scenario", () => {
 
   assert.equal(snapshot.rollbackEligible, true);
   assert.equal(snapshot.priority, "high");
+  assert.equal(snapshot.taskType, "cross_cutting");
 });
 
 test("buildTaskSnapshot keeps seeded ready state while suppressing ship action", () => {
@@ -101,4 +102,44 @@ test("buildTaskSnapshot keeps seeded ready state while suppressing ship action",
 
   assert.equal(snapshot.status, "ready_to_ship");
   assert.deepEqual(snapshot.availableActions, ["view_ci_status", "view_review_feedback"]);
+});
+
+test("summarizeTaskSnapshots counts tasks by status, priority, and task type", () => {
+  const summary = summarizeTaskSnapshots([
+    {
+      id: "task-1",
+      title: "Task 1",
+      scenarioId: "scenario-1",
+      status: "todo",
+      priority: "high",
+      taskType: "bugfix",
+      availableActions: ["submit"],
+      rollbackEligible: false
+    },
+    {
+      id: "task-2",
+      title: "Task 2",
+      scenarioId: "scenario-2",
+      status: "ready_to_ship",
+      priority: "high",
+      taskType: "feature",
+      availableActions: ["ship"],
+      rollbackEligible: true
+    },
+    {
+      id: "task-3",
+      title: "Task 3",
+      scenarioId: "scenario-3",
+      status: "todo",
+      priority: "low",
+      taskType: "bugfix",
+      availableActions: ["submit"],
+      rollbackEligible: false
+    }
+  ]);
+
+  assert.equal(summary.total, 3);
+  assert.deepEqual(summary.byStatus, { todo: 2, in_review: 0, ready_to_ship: 1 });
+  assert.deepEqual(summary.byPriority, { critical: 0, high: 2, medium: 0, low: 1 });
+  assert.deepEqual(summary.byTaskType, { bugfix: 2, feature: 1 });
 });
