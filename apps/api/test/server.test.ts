@@ -73,3 +73,76 @@ test("GET /tasks returns scenario-aware task snapshots", async (t) => {
   assert.equal(goldenTask.status, "ready_to_ship");
   assert.equal(goldenTask.availableActions.includes("ship"), false);
 });
+
+test("GET /tasks filters task snapshots by status", async (t) => {
+  const server = createServer();
+  server.listen(0, "127.0.0.1");
+  await once(server, "listening");
+  t.after(() => {
+    server.close();
+  });
+
+  const address = server.address() as AddressInfo;
+  const response = await fetch(`http://127.0.0.1:${address.port}/tasks?status=todo`);
+  const body = await response.json();
+
+  assert.equal(response.status, 200);
+  assert.ok(body.data.length > 0);
+  assert.ok(body.data.every((task: { status: string }) => task.status === "todo"));
+});
+
+test("GET /tasks filters task snapshots by priority", async (t) => {
+  const server = createServer();
+  server.listen(0, "127.0.0.1");
+  await once(server, "listening");
+  t.after(() => {
+    server.close();
+  });
+
+  const address = server.address() as AddressInfo;
+  const response = await fetch(`http://127.0.0.1:${address.port}/tasks?priority=medium`);
+  const body = await response.json();
+
+  assert.equal(response.status, 200);
+  assert.ok(body.data.length > 0);
+  assert.ok(body.data.every((task: { priority: string }) => task.priority === "medium"));
+});
+
+test("GET /tasks applies status and priority filters together", async (t) => {
+  const server = createServer();
+  server.listen(0, "127.0.0.1");
+  await once(server, "listening");
+  t.after(() => {
+    server.close();
+  });
+
+  const address = server.address() as AddressInfo;
+  const response = await fetch(`http://127.0.0.1:${address.port}/tasks?status=todo&priority=medium`);
+  const body = await response.json();
+
+  assert.equal(response.status, 200);
+  assert.ok(body.data.length > 0);
+  assert.ok(
+    body.data.every((task: { status: string; priority: string }) => task.status === "todo" && task.priority === "medium")
+  );
+});
+
+test("GET /tasks returns 400 for unsupported filter values", async (t) => {
+  const server = createServer();
+  server.listen(0, "127.0.0.1");
+  await once(server, "listening");
+  t.after(() => {
+    server.close();
+  });
+
+  const address = server.address() as AddressInfo;
+  const statusResponse = await fetch(`http://127.0.0.1:${address.port}/tasks?status=blocked`);
+  const statusBody = await statusResponse.json();
+  const priorityResponse = await fetch(`http://127.0.0.1:${address.port}/tasks?priority=urgent`);
+  const priorityBody = await priorityResponse.json();
+
+  assert.equal(statusResponse.status, 400);
+  assert.equal(statusBody.error.code, "invalid_filter");
+  assert.equal(priorityResponse.status, 400);
+  assert.equal(priorityBody.error.code, "invalid_filter");
+});
