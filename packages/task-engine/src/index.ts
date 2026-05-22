@@ -24,7 +24,7 @@ export function deriveReviewGate({
     };
   }
 
-  return { status: "in_review", availableActions: ["refresh", "view_review_feedback"] };
+  return { status: "in_review", availableActions: ["refresh", "view_ci_status", "view_review_feedback"] };
 }
 
 export function buildTaskSnapshot({
