@@ -53,6 +53,23 @@ test("GET /benchmarks/:id returns 404 for unknown tasks", async (t) => {
   assert.equal(body.error.code, "not_found");
 });
 
+test("GET /scenarios returns scenario definitions", async (t) => {
+  const server = createServer();
+  server.listen(0, "127.0.0.1");
+  await once(server, "listening");
+  t.after(() => {
+    server.close();
+  });
+
+  const address = server.address() as AddressInfo;
+  const response = await fetch(`http://127.0.0.1:${address.port}/scenarios`);
+  const body = await response.json();
+
+  assert.equal(response.status, 200);
+  assert.ok(Array.isArray(body.data));
+  assert.ok(body.data.some((scenario: { id: string }) => scenario.id === "scratch-live-cycle"));
+});
+
 test("GET /tasks returns scenario-aware task snapshots", async (t) => {
   const server = createServer();
   server.listen(0, "127.0.0.1");

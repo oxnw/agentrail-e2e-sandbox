@@ -5,6 +5,7 @@ Scenario-driven sandbox repository for AgentRail live-provider validation and be
 This repository is intentionally small enough to maintain, but realistic enough to exercise:
 
 - GitHub issue intake
+- Linear issue intake routing
 - pull request submit and reuse
 - CI status reads across multiple workflows
 - review feedback reads
