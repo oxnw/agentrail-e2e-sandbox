@@ -25,3 +25,22 @@ export function getBenchmarkTask(id: string) {
 export function buildTaskSnapshots(): TaskSnapshot[] {
   return catalog.tasks.map((task) => buildTaskSnapshot({ task, scenario: getScenario(task.scenarioId) }));
 }
+
+export function getTaskSnapshot(id: string): TaskSnapshot | null {
+  const task = getBenchmarkTask(id);
+  if (!task) {
+    return null;
+  }
+  return buildTaskSnapshot({ task, scenario: getScenario(task.scenarioId) });
+}
+
+export function getTaskSummary() {
+  const snapshots = buildTaskSnapshots();
+  return {
+    total: snapshots.length,
+    byStatus: snapshots.reduce<Record<string, number>>((counts, snapshot) => {
+      counts[snapshot.status] = (counts[snapshot.status] ?? 0) + 1;
+      return counts;
+    }, {})
+  };
+}
