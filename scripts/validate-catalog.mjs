@@ -1,7 +1,9 @@
 import { readFile } from "node:fs/promises";
+import { pathToFileURL } from "node:url";
 
 const manifest = JSON.parse(await readFile(new URL("../scenarios/manifest.json", import.meta.url), "utf8"));
-const catalog = JSON.parse(await readFile(new URL("../benchmarks/catalog.json", import.meta.url), "utf8"));
+const catalogPath = process.argv[2] ? pathToFileURL(process.argv[2]) : new URL("../benchmarks/catalog.json", import.meta.url);
+const catalog = JSON.parse(await readFile(catalogPath, "utf8"));
 const scenarioIds = new Set(manifest.scenarios.map((scenario) => scenario.id));
 const validPriorities = new Set(["critical", "high", "medium", "low"]);
 
@@ -11,6 +13,15 @@ if (catalog.version !== 1) {
 
 if (!Array.isArray(catalog.tasks) || catalog.tasks.length === 0) {
   throw new Error("Benchmark catalog must contain at least one task.");
+}
+
+const taskIds = new Set();
+for (const task of catalog.tasks) {
+  requireString(task.id, "task.id");
+  if (taskIds.has(task.id)) {
+    throw new Error(`Duplicate benchmark task id: ${task.id}.`);
+  }
+  taskIds.add(task.id);
 }
 
 for (const task of catalog.tasks) {
