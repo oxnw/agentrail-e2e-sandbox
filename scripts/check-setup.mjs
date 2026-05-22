@@ -7,7 +7,7 @@ const npmCiHint = "Run `npm ci` from the repository root to install workspace de
 
 function fail(message) {
   console.error(`Setup check failed: ${message}`);
-  process.exitCode = 1;
+  process.exit(1);
 }
 
 async function pathExists(filePath) {
@@ -78,10 +78,6 @@ if (missingPackages.length > 0) {
   fail(
     `Missing lockfile-defined dependency entries: ${missingPackages.join(", ")}. ${npmCiHint}`,
   );
-}
-
-if (process.exitCode) {
-  process.exit();
 }
 
 console.log("Setup check passed.");
