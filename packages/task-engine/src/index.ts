@@ -27,6 +27,10 @@ export function deriveReviewGate({
   return { status: "in_review", availableActions: ["refresh", "view_review_feedback"] };
 }
 
+function deriveReviewRequired(reviewOutcome: ReviewOutcome): boolean {
+  return reviewOutcome === "pending" || reviewOutcome === "changes_requested";
+}
+
 export function buildTaskSnapshot({
   task,
   scenario
@@ -34,9 +38,10 @@ export function buildTaskSnapshot({
   task: BenchmarkTask;
   scenario: ScenarioDefinition | null;
 }): TaskSnapshot {
+  const reviewOutcome = scenario?.expectedReviewOutcome ?? "variable";
   const reviewGate = deriveReviewGate({
     ciStatus: scenario?.expectedCiStatus ?? "variable",
-    reviewOutcome: scenario?.expectedReviewOutcome ?? "variable",
+    reviewOutcome,
     allowShip: scenario?.allowShip ?? false
   });
 
@@ -47,6 +52,7 @@ export function buildTaskSnapshot({
     status: reviewGate.status,
     priority: task.priority,
     availableActions: reviewGate.availableActions,
+    reviewRequired: deriveReviewRequired(reviewOutcome),
     rollbackEligible: Boolean(scenario?.allowRollback)
   };
 }

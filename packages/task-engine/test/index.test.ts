@@ -1,6 +1,44 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { buildTaskSnapshot, deriveReviewGate } from "../src/index.js";
+import type { BenchmarkTask, ScenarioDefinition } from "../../contracts/src/index.js";
+
+const baseTask: BenchmarkTask = {
+  id: "bm_snapshot_review_required",
+  title: "Review required task",
+  issueSlug: "benchmark-snapshot-review-required",
+  scenarioId: "review-scenario",
+  priority: "medium",
+  packages: ["packages/task-engine"],
+  taskType: "feature",
+  acceptanceCriteria: ["x"],
+  expectedChangedPaths: ["packages/task-engine/src/index.ts"],
+  requiredChecks: ["CI / Unit Tests"],
+  requiredArtifacts: ["pull_request"],
+  scoring: { correctness: 1 }
+};
+
+const baseScenario: ScenarioDefinition = {
+  id: "review-scenario",
+  kind: "seeded",
+  issueSlug: "benchmark-snapshot-review-required",
+  branch: "scenario/review-scenario",
+  baseBranch: "main",
+  shipTargetBranch: "integration/live",
+  expectedCiStatus: "passed",
+  expectedReviewOutcome: "approved",
+  allowSubmit: true,
+  allowShip: false,
+  allowRollback: false,
+  live: {
+    owner: "oxnw",
+    repo: "agentrail-e2e-sandbox",
+    issueNumber: 1,
+    pullNumber: 1,
+    headBranch: "scenario/review-scenario"
+  },
+  notes: "seeded"
+};
 
 test("deriveReviewGate blocks ship when CI is failing", () => {
   const result = deriveReviewGate({ ciStatus: "failed", reviewOutcome: "approved" });
@@ -58,6 +96,28 @@ test("buildTaskSnapshot reflects rollback eligibility from scenario", () => {
 
   assert.equal(snapshot.rollbackEligible, true);
   assert.equal(snapshot.priority, "high");
+});
+
+test("buildTaskSnapshot marks pending and changes-requested reviews as required", () => {
+  for (const expectedReviewOutcome of ["pending", "changes_requested"] as const) {
+    const snapshot = buildTaskSnapshot({
+      task: baseTask,
+      scenario: { ...baseScenario, expectedReviewOutcome }
+    });
+
+    assert.equal(snapshot.reviewRequired, true);
+  }
+});
+
+test("buildTaskSnapshot marks approved and variable reviews as not required", () => {
+  for (const expectedReviewOutcome of ["approved", "variable"] as const) {
+    const snapshot = buildTaskSnapshot({
+      task: baseTask,
+      scenario: { ...baseScenario, expectedReviewOutcome }
+    });
+
+    assert.equal(snapshot.reviewRequired, false);
+  }
 });
 
 test("buildTaskSnapshot keeps seeded ready state while suppressing ship action", () => {
