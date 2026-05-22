@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { buildTaskSnapshot, deriveReviewGate } from "../src/index.js";
+import { buildTaskSnapshot, deriveReviewGate, summarizeTaskSnapshots } from "../src/index.js";
 
 test("deriveReviewGate blocks ship when CI is failing", () => {
   const result = deriveReviewGate({ ciStatus: "failed", reviewOutcome: "approved" });
@@ -58,6 +58,7 @@ test("buildTaskSnapshot reflects rollback eligibility from scenario", () => {
 
   assert.equal(snapshot.rollbackEligible, true);
   assert.equal(snapshot.priority, "high");
+  assert.equal(snapshot.taskType, "cross_cutting");
 });
 
 test("buildTaskSnapshot keeps seeded ready state while suppressing ship action", () => {
@@ -101,4 +102,58 @@ test("buildTaskSnapshot keeps seeded ready state while suppressing ship action",
 
   assert.equal(snapshot.status, "ready_to_ship");
   assert.deepEqual(snapshot.availableActions, ["view_ci_status", "view_review_feedback"]);
+});
+
+test("summarizeTaskSnapshots counts total, status, priority, and task type", () => {
+  const summary = summarizeTaskSnapshots([
+    {
+      id: "one",
+      title: "One",
+      scenarioId: "golden-open",
+      taskType: "api_feature",
+      status: "ready_to_ship",
+      priority: "medium",
+      availableActions: ["view_ci_status"],
+      rollbackEligible: false
+    },
+    {
+      id: "two",
+      title: "Two",
+      scenarioId: "scratch-live-cycle",
+      taskType: "api_feature",
+      status: "todo",
+      priority: "high",
+      availableActions: ["submit"],
+      rollbackEligible: true
+    },
+    {
+      id: "three",
+      title: "Three",
+      scenarioId: "scratch-live-cycle",
+      taskType: "tooling_setup",
+      status: "todo",
+      priority: "high",
+      availableActions: ["submit"],
+      rollbackEligible: true
+    }
+  ]);
+
+  assert.deepEqual(summary, {
+    total: 3,
+    byStatus: {
+      todo: 2,
+      in_review: 0,
+      ready_to_ship: 1
+    },
+    byPriority: {
+      critical: 0,
+      high: 2,
+      medium: 1,
+      low: 0
+    },
+    byTaskType: {
+      api_feature: 2,
+      tooling_setup: 1
+    }
+  });
 });
