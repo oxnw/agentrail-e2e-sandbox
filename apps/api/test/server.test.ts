@@ -45,6 +45,25 @@ test("GET /benchmarks/:id returns a benchmark task", () => {
   assert.equal(response.body.data.rollbackEligible, false);
 });
 
+test("GET /benchmarks/:id keeps catalog task fields at the top level", () => {
+  const response = request("/benchmarks/bm_api_benchmark_endpoint");
+
+  assert.equal(response.status, 200);
+  assert.equal(response.body.data.taskType, "feature");
+  assert.deepEqual(response.body.data.acceptanceCriteria, [
+    "API returns benchmark task metadata by id.",
+    "Unknown task ids return 404 JSON responses.",
+    "Tests cover success and not-found responses."
+  ]);
+  assert.deepEqual(response.body.data.expectedChangedPaths, [
+    "apps/api/src/server.ts",
+    "apps/api/test/server.test.ts",
+    "packages/contracts/src/index.ts"
+  ]);
+  assert.deepEqual(response.body.data.requiredChecks, ["CI / Unit Tests"]);
+  assert.equal(response.body.data.scoring.correctness, 0.5);
+});
+
 test("GET /benchmarks/:id returns rollback eligibility from the scenario manifest", () => {
   const response = request("/benchmarks/bm_crosspkg_rollback_audit");
 

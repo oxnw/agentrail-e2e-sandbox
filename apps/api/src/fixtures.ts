@@ -1,15 +1,21 @@
 import benchmarkCatalog from "../../../benchmarks/catalog.json" with { type: "json" };
 import scenarioManifest from "../../../scenarios/manifest.json" with { type: "json" };
-import type { BenchmarkCatalog, ScenarioManifest, TaskSnapshot } from "../../../packages/contracts/src/index.js";
+import type {
+  BenchmarkCatalog,
+  BenchmarkTask,
+  ScenarioDefinition,
+  ScenarioManifest,
+  TaskSnapshot
+} from "../../../packages/contracts/src/index.js";
 import { buildTaskSnapshot } from "../../../packages/task-engine/src/index.js";
 
 const catalog = benchmarkCatalog as unknown as BenchmarkCatalog;
 const manifest = scenarioManifest as unknown as ScenarioManifest;
 
-type BenchmarkTaskDetail = BenchmarkCatalog["tasks"][number] & {
-  scenarioKind: ScenarioManifest["scenarios"][number]["kind"] | null;
-  expectedCiStatus: ScenarioManifest["scenarios"][number]["expectedCiStatus"] | null;
-  expectedReviewOutcome: ScenarioManifest["scenarios"][number]["expectedReviewOutcome"] | null;
+type BenchmarkTaskDetail = BenchmarkTask & {
+  scenarioKind: ScenarioDefinition["kind"] | null;
+  expectedCiStatus: ScenarioDefinition["expectedCiStatus"] | null;
+  expectedReviewOutcome: ScenarioDefinition["expectedReviewOutcome"] | null;
   rollbackEligible: boolean;
 };
 
@@ -35,14 +41,17 @@ export function getBenchmarkTaskDetail(id: string): BenchmarkTaskDetail | null {
     return null;
   }
 
-  const scenario = getScenario(task.scenarioId);
+  return buildBenchmarkTaskDetail(task, getScenario(task.scenarioId));
+}
 
+function buildBenchmarkTaskDetail(task: BenchmarkTask, scenario: ScenarioDefinition | null): BenchmarkTaskDetail {
   return {
     ...task,
+    scenarioId: scenario?.id ?? task.scenarioId,
     scenarioKind: scenario?.kind ?? null,
     expectedCiStatus: scenario?.expectedCiStatus ?? null,
     expectedReviewOutcome: scenario?.expectedReviewOutcome ?? null,
-    rollbackEligible: Boolean(scenario?.allowRollback)
+    rollbackEligible: scenario?.allowRollback ?? false
   };
 }
 

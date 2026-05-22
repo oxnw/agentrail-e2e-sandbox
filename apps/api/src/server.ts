@@ -25,7 +25,8 @@ export function handleRequest(req: ApiRequest, res: ApiResponse) {
 
   const benchmarkMatch = req.method === "GET" ? url.pathname.match(/^\/benchmarks\/([^/]+)$/) : null;
   if (benchmarkMatch) {
-    const task = getBenchmarkTaskDetail(benchmarkMatch[1]);
+    const benchmarkId = decodeURIComponent(benchmarkMatch[1]);
+    const task = getBenchmarkTaskDetail(benchmarkId);
     if (!task) {
       return json(res, 404, { error: { code: "not_found", message: "Benchmark task was not found." } });
     }
