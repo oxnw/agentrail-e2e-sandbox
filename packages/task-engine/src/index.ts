@@ -13,6 +13,10 @@ export function deriveReviewGate({
     return { status: "todo", availableActions: ["submit", "view_ci_status"] };
   }
 
+  if (ciStatus === "flaky") {
+    return { status: "in_review", availableActions: ["rerun_ci", "view_ci_status"] };
+  }
+
   if (reviewOutcome === "changes_requested") {
     return { status: "todo", availableActions: ["submit", "view_review_feedback"] };
   }
