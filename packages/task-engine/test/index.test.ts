@@ -20,6 +20,13 @@ test("deriveReviewGate hides ship for approved seeded scenarios with allowShip f
   assert.deepEqual(result.availableActions, ["view_ci_status", "view_review_feedback"]);
 });
 
+test("deriveReviewGate treats flaky CI as retryable but not shippable", () => {
+  const result = deriveReviewGate({ ciStatus: "flaky", reviewOutcome: "approved" });
+  assert.equal(result.status, "in_review");
+  assert.deepEqual(result.availableActions, ["rerun_ci", "view_ci_status"]);
+  assert.equal(result.availableActions.includes("ship"), false);
+});
+
 test("buildTaskSnapshot reflects rollback eligibility from scenario", () => {
   const snapshot = buildTaskSnapshot({
     task: {
