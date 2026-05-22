@@ -27,6 +27,10 @@ export function deriveReviewGate({
   return { status: "in_review", availableActions: ["refresh", "view_review_feedback"] };
 }
 
+export function deriveReviewRequired(reviewOutcome: ReviewOutcome): boolean {
+  return reviewOutcome === "pending" || reviewOutcome === "changes_requested";
+}
+
 export function buildTaskSnapshot({
   task,
   scenario
@@ -47,6 +51,7 @@ export function buildTaskSnapshot({
     status: reviewGate.status,
     priority: task.priority,
     availableActions: reviewGate.availableActions,
+    reviewRequired: deriveReviewRequired(scenario?.expectedReviewOutcome ?? "variable"),
     rollbackEligible: Boolean(scenario?.allowRollback)
   };
 }
