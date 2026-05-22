@@ -5,6 +5,7 @@ import process from "node:process";
 const MIN_NODE_MAJOR = 20;
 const rootDir = process.cwd();
 const npmCiHint = "Run `npm ci` from the repository root to install workspace dependencies.";
+const nodeVersionHint = "Install Node.js 20 or newer before running workspace commands.";
 
 function fail(message, detail) {
   console.error(`Setup check failed: ${message}`);
@@ -42,7 +43,7 @@ const major = nodeMajor(process.version);
 if (!Number.isInteger(major) || major < MIN_NODE_MAJOR) {
   fail(
     `Node.js ${MIN_NODE_MAJOR} or newer is required. Current version: ${process.version}.`,
-    "Install a supported Node.js version before running workspace commands.",
+    nodeVersionHint,
   );
 }
 
