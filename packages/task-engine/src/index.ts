@@ -1,4 +1,13 @@
-import type { BenchmarkTask, CiStatus, ReviewOutcome, ScenarioDefinition, TaskSnapshot, TaskStatus } from "../../contracts/src/index.js";
+import type {
+  BenchmarkTask,
+  CiStatus,
+  Priority,
+  ReviewOutcome,
+  ScenarioDefinition,
+  TaskSnapshot,
+  TaskStatus,
+  TaskSummary
+} from "../../contracts/src/index.js";
 
 export function deriveReviewGate({
   ciStatus,
@@ -46,7 +55,42 @@ export function buildTaskSnapshot({
     scenarioId: task.scenarioId,
     status: reviewGate.status,
     priority: task.priority,
+    taskType: task.taskType,
     availableActions: reviewGate.availableActions,
     rollbackEligible: Boolean(scenario?.allowRollback)
+  };
+}
+
+export function summarizeTaskSnapshots(snapshots: TaskSnapshot[]): TaskSummary {
+  const summary: TaskSummary = {
+    total: snapshots.length,
+    byStatus: zeroTaskStatusCounts(),
+    byPriority: zeroPriorityCounts(),
+    byTaskType: {}
+  };
+
+  for (const snapshot of snapshots) {
+    summary.byStatus[snapshot.status] += 1;
+    summary.byPriority[snapshot.priority] += 1;
+    summary.byTaskType[snapshot.taskType] = (summary.byTaskType[snapshot.taskType] ?? 0) + 1;
+  }
+
+  return summary;
+}
+
+function zeroTaskStatusCounts(): Record<TaskStatus, number> {
+  return {
+    todo: 0,
+    in_review: 0,
+    ready_to_ship: 0
+  };
+}
+
+function zeroPriorityCounts(): Record<Priority, number> {
+  return {
+    critical: 0,
+    high: 0,
+    medium: 0,
+    low: 0
   };
 }
