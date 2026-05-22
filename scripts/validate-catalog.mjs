@@ -13,8 +13,14 @@ if (!Array.isArray(catalog.tasks) || catalog.tasks.length === 0) {
   throw new Error("Benchmark catalog must contain at least one task.");
 }
 
+const taskIds = new Set();
 for (const task of catalog.tasks) {
   requireString(task.id, "task.id");
+  if (taskIds.has(task.id)) {
+    throw new Error(`Duplicate benchmark task id: ${task.id}.`);
+  }
+  taskIds.add(task.id);
+
   requireString(task.title, `task.title for ${task.id}`);
   requireString(task.issueSlug, `task.issueSlug for ${task.id}`);
   requireString(task.scenarioId, `task.scenarioId for ${task.id}`);
