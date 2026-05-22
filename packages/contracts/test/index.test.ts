@@ -19,6 +19,11 @@ test("normalizePriorityLabel maps aliases", () => {
   assert.equal(normalizePriorityLabel("p2"), "low");
 });
 
+test("normalizePriorityLabel handles whitespace and case variants", () => {
+  assert.equal(normalizePriorityLabel(" P1 "), "high");
+  assert.equal(normalizePriorityLabel("VIP"), "high");
+});
+
 test("normalizePriorityLabel rejects unknown values", () => {
   assert.throws(() => normalizePriorityLabel("escalated"));
 });
