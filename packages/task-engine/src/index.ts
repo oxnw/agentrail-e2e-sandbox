@@ -1,4 +1,13 @@
-import type { BenchmarkTask, CiStatus, ReviewOutcome, ScenarioDefinition, TaskSnapshot, TaskStatus } from "../../contracts/src/index.js";
+import type {
+  BenchmarkTask,
+  CiStatus,
+  Priority,
+  ReviewOutcome,
+  ScenarioDefinition,
+  TaskSnapshot,
+  TaskStatus,
+  TaskSummary
+} from "../../contracts/src/index.js";
 
 export function deriveReviewGate({
   ciStatus,
@@ -46,7 +55,29 @@ export function buildTaskSnapshot({
     scenarioId: task.scenarioId,
     status: reviewGate.status,
     priority: task.priority,
+    taskType: task.taskType,
     availableActions: reviewGate.availableActions,
     rollbackEligible: Boolean(scenario?.allowRollback)
   };
+}
+
+export function buildTaskSummary(snapshots: TaskSnapshot[]): TaskSummary {
+  const summary: TaskSummary = {
+    total: snapshots.length,
+    byStatus: zeroedCounts<TaskStatus>(["todo", "in_review", "ready_to_ship"]),
+    byPriority: zeroedCounts<Priority>(["critical", "high", "medium", "low"]),
+    byTaskType: {}
+  };
+
+  for (const snapshot of snapshots) {
+    summary.byStatus[snapshot.status] += 1;
+    summary.byPriority[snapshot.priority] += 1;
+    summary.byTaskType[snapshot.taskType] = (summary.byTaskType[snapshot.taskType] ?? 0) + 1;
+  }
+
+  return summary;
+}
+
+function zeroedCounts<T extends string>(keys: T[]): Record<T, number> {
+  return Object.fromEntries(keys.map((key) => [key, 0])) as Record<T, number>;
 }
