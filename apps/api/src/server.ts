@@ -1,5 +1,9 @@
 import http from "node:http";
-import { getBenchmarkTask, getScenario, buildTaskSnapshots } from "./fixtures.js";
+import type { Priority, TaskStatus } from "../../../packages/contracts/src/index.js";
+import { getBenchmarkTask, getScenario, listTaskSnapshots } from "./fixtures.js";
+
+const VALID_TASK_STATUSES = new Set<TaskStatus>(["todo", "in_review", "ready_to_ship"]);
+const VALID_PRIORITIES = new Set<Priority>(["critical", "high", "medium", "low"]);
 
 function json(res: http.ServerResponse, status: number, body: unknown) {
   res.writeHead(status, { "content-type": "application/json" });
@@ -15,7 +19,17 @@ export function createServer() {
     }
 
     if (req.method === "GET" && url.pathname === "/tasks") {
-      return json(res, 200, { data: buildTaskSnapshots() });
+      const status = validateQueryValue(url.searchParams.get("status"), VALID_TASK_STATUSES, "status");
+      if (status.error) {
+        return json(res, 400, status.error);
+      }
+
+      const priority = validateQueryValue(url.searchParams.get("priority"), VALID_PRIORITIES, "priority");
+      if (priority.error) {
+        return json(res, 400, priority.error);
+      }
+
+      return json(res, 200, { data: listTaskSnapshots({ status: status.value, priority: priority.value }) });
     }
 
     const benchmarkMatch = req.method === "GET" ? url.pathname.match(/^\/benchmarks\/([^/]+)$/) : null;
@@ -38,4 +52,27 @@ export function createServer() {
 
     return json(res, 404, { error: { code: "not_found", message: "Route was not found." } });
   });
+}
+
+function validateQueryValue<T extends string>(
+  value: string | null,
+  allowedValues: Set<T>,
+  field: string
+): { value?: T; error?: { error: { code: string; message: string } } } {
+  if (value === null) {
+    return {};
+  }
+
+  if (allowedValues.has(value as T)) {
+    return { value: value as T };
+  }
+
+  return {
+    error: {
+      error: {
+        code: "invalid_filter",
+        message: `Unsupported ${field} filter value: ${value}`
+      }
+    }
+  };
 }
