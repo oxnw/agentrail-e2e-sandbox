@@ -14,6 +14,13 @@ test("deriveReviewGate exposes ship for passed and approved state", () => {
   assert.deepEqual(result.availableActions, ["view_ci_status", "ship"]);
 });
 
+test("deriveReviewGate treats flaky CI as retryable but not shippable", () => {
+  const result = deriveReviewGate({ ciStatus: "flaky", reviewOutcome: "approved" });
+  assert.equal(result.status, "in_review");
+  assert.deepEqual(result.availableActions, ["rerun_ci", "view_ci_status"]);
+  assert.equal(result.availableActions.includes("ship"), false);
+});
+
 test("deriveReviewGate hides ship for approved seeded scenarios with allowShip false", () => {
   const result = deriveReviewGate({ ciStatus: "passed", reviewOutcome: "approved", allowShip: false });
   assert.equal(result.status, "ready_to_ship");
