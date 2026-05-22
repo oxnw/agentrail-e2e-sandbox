@@ -13,6 +13,7 @@
     "lint": "node scripts/lint-repo.mjs",
     "scenario:validate": "node scripts/validate-scenarios.mjs",
     "catalog:validate": "node scripts/validate-catalog.mjs",
+    "benchmark:verify": "node scripts/verify-benchmark-task.mjs",
     "test": "npm run build && node --test dist/apps/api/test/server.test.js dist/packages/task-engine/test/index.test.js dist/packages/contracts/test/index.test.js"
   },
   "devDependencies": {

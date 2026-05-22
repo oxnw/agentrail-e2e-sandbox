@@ -2,99 +2,37 @@
   "version": 1,
   "tasks": [
     {
-      "id": "bm_contract_priority_labels",
-      "title": "Normalize priority labels in contract metadata",
-      "issueSlug": "benchmark-priority-label-normalization",
+      "id": "bm_priority_alias_trim",
+      "title": "Normalize priority aliases with whitespace and case variants",
+      "issueBody": "Priority labels arrive from providers with inconsistent casing and occasional surrounding whitespace. Update priority normalization so values like ` P1 ` and `VIP` resolve correctly without weakening unknown-label rejection.",
+      "issueSlug": "benchmark-priority-alias-trim",
       "scenarioId": "golden-open",
       "priority": "high",
       "packages": [
         "packages/contracts"
       ],
       "taskType": "bugfix",
+      "difficulty": "small",
       "acceptanceCriteria": [
-        "Priority aliases map to critical, high, medium, or low.",
-        "Contract validation rejects unknown priority values.",
-        "Tests cover label normalization edge cases."
+        "`normalizePriorityLabel(\" P1 \")` returns `\"high\"`.",
+        "`normalizePriorityLabel(\"VIP\")` returns `\"high\"`.",
+        "Unknown priority labels still throw."
       ],
       "expectedChangedPaths": [
         "packages/contracts/src/index.ts",
         "packages/contracts/test/index.test.ts"
       ],
+      "validationCommand": "npm run build && node --test dist/packages/contracts/test/index.test.js",
+      "successCriteria": [
+        "Contracts tests pass.",
+        "The change is limited to priority alias normalization and tests."
+      ],
       "requiredChecks": [
-        "CI / Unit Tests",
-        "Lint / Repo Checks"
+        "Contracts unit tests"
       ],
       "requiredArtifacts": [
         "pull_request",
         "test_evidence"
-      ],
-      "scoring": {
-        "correctness": 0.5,
-        "tests": 0.25,
-        "scope_control": 0.15,
-        "artifact_quality": 0.1
-      }
-    },
-    {
-      "id": "bm_contract_scenario_validation",
-      "title": "Tighten scenario manifest validation",
-      "issueSlug": "benchmark-scenario-manifest-guardrails",
-      "scenarioId": "failing-open",
-      "priority": "high",
-      "packages": [
-        "packages/contracts"
-      ],
-      "taskType": "hardening",
-      "acceptanceCriteria": [
-        "Scenario manifests reject seeded entries without fixed branches.",
-        "Scratch scenarios may use branch templates.",
-        "Validation errors identify the broken scenario id."
-      ],
-      "expectedChangedPaths": [
-        "packages/contracts/src/index.ts",
-        "packages/contracts/test/index.test.ts",
-        "scripts/validate-scenarios.mjs"
-      ],
-      "requiredChecks": [
-        "CI / Unit Tests",
-        "Scenario Contract / Validate Scenario Manifest"
-      ],
-      "requiredArtifacts": [
-        "pull_request",
-        "review_resolution"
-      ],
-      "scoring": {
-        "correctness": 0.45,
-        "tests": 0.25,
-        "review_handling": 0.2,
-        "artifact_quality": 0.1
-      }
-    },
-    {
-      "id": "bm_engine_issue_ingest",
-      "title": "Preserve task context across sparse issue updates",
-      "issueSlug": "benchmark-sparse-issue-update-context",
-      "scenarioId": "scratch-live-cycle",
-      "priority": "medium",
-      "packages": [
-        "packages/task-engine"
-      ],
-      "taskType": "bugfix",
-      "acceptanceCriteria": [
-        "Sparse issue updates keep existing labels when new payload omits labels.",
-        "Sparse issue updates keep assignee metadata when omitted.",
-        "Tests cover open and closed issue states."
-      ],
-      "expectedChangedPaths": [
-        "packages/task-engine/src/index.ts",
-        "packages/task-engine/test/index.test.ts"
-      ],
-      "requiredChecks": [
-        "CI / Unit Tests"
-      ],
-      "requiredArtifacts": [
-        "pull_request",
-        "ship_candidate"
       ],
       "scoring": {
         "correctness": 0.55,
@@ -104,62 +42,74 @@
       }
     },
     {
-      "id": "bm_engine_review_actions",
-      "title": "Recommend actions from CI and review state",
-      "issueSlug": "benchmark-review-action-recommendation",
-      "scenarioId": "failing-open",
+      "id": "bm_review_gate_flaky_ci",
+      "title": "Treat flaky CI as retryable but not shippable",
+      "issueBody": "`deriveReviewGate()` currently needs an explicit flaky-CI path. Update the task engine so flaky CI does not expose ship, does not look like hard failure, and gives the runner a retry-oriented action set.",
+      "issueSlug": "benchmark-review-gate-flaky-ci",
+      "scenarioId": "flaky-open",
       "priority": "medium",
       "packages": [
         "packages/task-engine"
       ],
-      "taskType": "feature",
+      "taskType": "logic_fix",
+      "difficulty": "medium",
       "acceptanceCriteria": [
-        "Failed CI blocks ship recommendations.",
-        "Approved reviews with passing CI expose ship.",
-        "Pending reviews expose refresh-oriented actions."
+        "`ciStatus: \"flaky\"` returns `status: \"in_review\"`.",
+        "Flaky CI actions include `rerun_ci` and `view_ci_status`.",
+        "Flaky CI never exposes `ship`."
       ],
       "expectedChangedPaths": [
         "packages/task-engine/src/index.ts",
         "packages/task-engine/test/index.test.ts"
       ],
+      "validationCommand": "npm run build && node --test dist/packages/task-engine/test/index.test.js",
+      "successCriteria": [
+        "Task-engine tests pass.",
+        "Failed, passed, and changes-requested behavior remains unchanged."
+      ],
       "requiredChecks": [
-        "CI / Unit Tests",
-        "Lint / Repo Checks"
+        "Task-engine unit tests"
       ],
       "requiredArtifacts": [
         "pull_request",
-        "review_resolution"
+        "test_evidence"
       ],
       "scoring": {
-        "correctness": 0.5,
-        "tests": 0.3,
+        "correctness": 0.55,
+        "tests": 0.25,
         "scope_control": 0.1,
         "artifact_quality": 0.1
       }
     },
     {
-      "id": "bm_api_benchmark_endpoint",
-      "title": "Expose benchmark task details through the API",
-      "issueSlug": "benchmark-api-task-catalog-endpoint",
+      "id": "bm_api_task_filters",
+      "title": "Add status and priority filters to the task list API",
+      "issueBody": "The API should let benchmark clients request task snapshots by lifecycle status and priority. Add `GET /tasks?status=<status>&priority=<priority>` support with validation for unsupported filter values.",
+      "issueSlug": "benchmark-api-task-filters",
       "scenarioId": "golden-open",
       "priority": "medium",
       "packages": [
-        "apps/api",
-        "packages/contracts"
+        "apps/api"
       ],
-      "taskType": "feature",
+      "taskType": "api_feature",
+      "difficulty": "medium",
       "acceptanceCriteria": [
-        "API returns benchmark task metadata by id.",
-        "Unknown task ids return 404 JSON responses.",
-        "Tests cover success and not-found responses."
+        "`GET /tasks?status=todo` returns only todo tasks.",
+        "`GET /tasks?priority=medium` returns only medium-priority tasks.",
+        "Unsupported filter values return a 400 JSON error."
       ],
       "expectedChangedPaths": [
+        "apps/api/src/fixtures.ts",
         "apps/api/src/server.ts",
-        "apps/api/test/server.test.ts",
-        "packages/contracts/src/index.ts"
+        "apps/api/test/server.test.ts"
+      ],
+      "validationCommand": "npm run build && node --test dist/apps/api/test/server.test.js",
+      "successCriteria": [
+        "API tests pass.",
+        "Existing unfiltered `GET /tasks` behavior still works."
       ],
       "requiredChecks": [
-        "CI / Unit Tests"
+        "API unit tests"
       ],
       "requiredArtifacts": [
         "pull_request",
@@ -167,43 +117,91 @@
       ],
       "scoring": {
         "correctness": 0.5,
-        "tests": 0.25,
-        "api_behavior": 0.15,
+        "tests": 0.3,
+        "api_behavior": 0.1,
         "artifact_quality": 0.1
       }
     },
     {
-      "id": "bm_crosspkg_rollback_audit",
-      "title": "Record rollback eligibility in task snapshots",
-      "issueSlug": "benchmark-rollback-eligibility-audit",
+      "id": "bm_api_task_detail",
+      "title": "Add task detail lookups by task id",
+      "issueBody": "Benchmark clients need to fetch a single task snapshot. Add `GET /tasks/:id` that returns the same snapshot shape as `GET /tasks`, with a stable JSON 404 for unknown task ids.",
+      "issueSlug": "benchmark-api-task-detail",
+      "scenarioId": "failing-open",
+      "priority": "medium",
+      "packages": [
+        "apps/api"
+      ],
+      "taskType": "api_feature",
+      "difficulty": "medium",
+      "acceptanceCriteria": [
+        "`GET /tasks/bm_api_task_detail` returns that task snapshot.",
+        "Unknown task ids return a 404 JSON error.",
+        "`GET /tasks/summary` is not shadowed by the dynamic route."
+      ],
+      "expectedChangedPaths": [
+        "apps/api/src/fixtures.ts",
+        "apps/api/src/server.ts",
+        "apps/api/test/server.test.ts"
+      ],
+      "validationCommand": "npm run build && node --test dist/apps/api/test/server.test.js",
+      "successCriteria": [
+        "API tests pass.",
+        "Task detail and task list shapes remain consistent."
+      ],
+      "requiredChecks": [
+        "API unit tests"
+      ],
+      "requiredArtifacts": [
+        "pull_request",
+        "test_evidence"
+      ],
+      "scoring": {
+        "correctness": 0.5,
+        "tests": 0.3,
+        "api_behavior": 0.1,
+        "artifact_quality": 0.1
+      }
+    },
+    {
+      "id": "bm_task_summary_endpoint",
+      "title": "Add task summary counts endpoint",
+      "issueBody": "Benchmark dashboards need aggregate task counts without pulling every task. Add `GET /tasks/summary` returning counts by status, priority, and task type.",
+      "issueSlug": "benchmark-task-summary-endpoint",
       "scenarioId": "scratch-live-cycle",
-      "priority": "high",
+      "priority": "medium",
       "packages": [
         "apps/api",
         "packages/task-engine",
         "packages/contracts"
       ],
-      "taskType": "cross_cutting",
+      "taskType": "api_feature",
+      "difficulty": "medium",
       "acceptanceCriteria": [
-        "Task snapshots expose rollback eligibility.",
-        "Eligibility respects scenario allowRollback flags.",
-        "API and engine tests cover seeded and scratch scenarios."
+        "`GET /tasks/summary` returns total task count.",
+        "Summary includes counts by status, priority, and task type.",
+        "Summary counts are derived from the same snapshots returned by `GET /tasks`."
       ],
       "expectedChangedPaths": [
+        "apps/api/src/fixtures.ts",
         "apps/api/src/server.ts",
         "apps/api/test/server.test.ts",
+        "packages/contracts/src/index.ts",
         "packages/task-engine/src/index.ts",
-        "packages/task-engine/test/index.test.ts",
-        "packages/contracts/src/index.ts"
+        "packages/task-engine/test/index.test.ts"
+      ],
+      "validationCommand": "npm run build && node --test dist/apps/api/test/server.test.js dist/packages/task-engine/test/index.test.js",
+      "successCriteria": [
+        "API and task-engine tests pass.",
+        "The summary endpoint does not duplicate fixture data."
       ],
       "requiredChecks": [
-        "CI / Unit Tests",
-        "Scenario Contract / Validate Scenario Manifest"
+        "API unit tests",
+        "Task-engine unit tests"
       ],
       "requiredArtifacts": [
         "pull_request",
-        "ship_candidate",
-        "rollback_plan"
+        "test_evidence"
       ],
       "scoring": {
         "correctness": 0.45,
@@ -213,69 +211,213 @@
       }
     },
     {
-      "id": "bm_linear_ci_projection",
-      "title": "Project CI readiness for Linear issue intake",
-      "issueSlug": "benchmark-linear-ci-projection",
-      "scenarioId": "scratch-live-cycle",
-      "priority": "low",
+      "id": "bm_catalog_duplicate_ids",
+      "title": "Reject duplicate benchmark catalog task ids",
+      "issueBody": "The benchmark catalog validator should reject duplicate task ids before generated issues are created. Add duplicate-id detection with an error that names the duplicate id.",
+      "issueSlug": "benchmark-catalog-duplicate-ids",
+      "scenarioId": "failing-open",
+      "priority": "high",
       "packages": [
-        "packages/task-engine"
+        "scripts"
       ],
-      "taskType": "live_validation",
+      "taskType": "validation_script",
+      "difficulty": "small",
       "acceptanceCriteria": [
-        "Linear intake tasks route to the scratch live-cycle scenario.",
-        "AgentRail opens a pull request for the managed runner output.",
-        "Passing GitHub Actions checks mark the task shippable."
+        "`scripts/validate-catalog.mjs` rejects duplicate task ids.",
+        "The error message includes the duplicated id.",
+        "The current catalog still validates successfully."
       ],
       "expectedChangedPaths": [
-        "benchmarks/catalog.json"
+        "scripts/validate-catalog.mjs"
+      ],
+      "validationCommand": "npm run catalog:validate",
+      "successCriteria": [
+        "Catalog validation passes on the real catalog.",
+        "The duplicate-id branch is covered by a focused validator path or test fixture."
       ],
       "requiredChecks": [
-        "CI / Unit Tests",
-        "Lint / Repo Checks"
-      ],
-      "requiredArtifacts": [
-        "pull_request",
-        "ship_candidate"
-      ],
-      "scoring": {
-        "routing": 0.3,
-        "runner_wakeup": 0.25,
-        "ci_observation": 0.25,
-        "artifact_quality": 0.2
-      }
-    },
-    {
-      "id": "bm_github_runner_lifecycle_reliability",
-      "title": "Verify runner lifecycle reliability for GitHub issue intake",
-      "issueSlug": "benchmark-github-runner-lifecycle-reliability",
-      "scenarioId": "scratch-live-cycle",
-      "priority": "medium",
-      "packages": [
-        "packages/task-engine"
-      ],
-      "taskType": "live_validation",
-      "acceptanceCriteria": [
-        "GitHub issue intake starts an AgentRail-managed runner for issue #85.",
-        "The managed runner records progress and completion reports for the run.",
-        "AgentRail opens a pull request for the validated runner output."
-      ],
-      "expectedChangedPaths": [
-        "benchmarks/catalog.json"
-      ],
-      "requiredChecks": [
-        "CI / Unit Tests",
-        "Lint / Repo Checks"
+        "Catalog validation"
       ],
       "requiredArtifacts": [
         "pull_request",
         "test_evidence"
       ],
       "scoring": {
-        "intake_routing": 0.3,
-        "runner_lifecycle": 0.3,
-        "reporting": 0.2,
-        "artifact_quality": 0.2
+        "correctness": 0.55,
+        "tests": 0.25,
+        "scope_control": 0.1,
+        "artifact_quality": 0.1
+      }
+    },
+    {
+      "id": "bm_scenario_seeded_branch_check",
+      "title": "Require seeded scenario live branch metadata to match the scenario branch",
+      "issueBody": "Seeded scenarios represent existing GitHub PR state, so their `live.headBranch` must match the scenario `branch`. Add this guard to scenario validation and contracts tests.",
+      "issueSlug": "benchmark-scenario-seeded-branch-check",
+      "scenarioId": "failing-open",
+      "priority": "high",
+      "packages": [
+        "packages/contracts",
+        "scripts"
+      ],
+      "taskType": "validation_script",
+      "difficulty": "medium",
+      "acceptanceCriteria": [
+        "Seeded scenario validation rejects mismatched `live.headBranch` values.",
+        "Scratch scenarios may still use branch templates.",
+        "Error messages include the broken scenario id."
+      ],
+      "expectedChangedPaths": [
+        "packages/contracts/src/index.ts",
+        "packages/contracts/test/index.test.ts",
+        "scripts/validate-scenarios.mjs"
+      ],
+      "validationCommand": "npm run build && node --test dist/packages/contracts/test/index.test.js && npm run scenario:validate",
+      "successCriteria": [
+        "Contracts tests pass.",
+        "Scenario manifest validation passes on the real manifest."
+      ],
+      "requiredChecks": [
+        "Contracts unit tests",
+        "Scenario validation"
+      ],
+      "requiredArtifacts": [
+        "pull_request",
+        "test_evidence"
+      ],
+      "scoring": {
+        "correctness": 0.5,
+        "tests": 0.25,
+        "validation_behavior": 0.15,
+        "artifact_quality": 0.1
+      }
+    },
+    {
+      "id": "bm_snapshot_review_required",
+      "title": "Expose review-required state on task snapshots",
+      "issueBody": "Task snapshots should tell clients whether review is still required. Add a `reviewRequired` boolean derived from scenario review outcome and expose it through API task snapshots.",
+      "issueSlug": "benchmark-snapshot-review-required",
+      "scenarioId": "failing-open",
+      "priority": "medium",
+      "packages": [
+        "apps/api",
+        "packages/contracts",
+        "packages/task-engine"
+      ],
+      "taskType": "cross_package",
+      "difficulty": "medium",
+      "acceptanceCriteria": [
+        "Task snapshots include `reviewRequired`.",
+        "Pending or changes-requested review states set `reviewRequired: true`.",
+        "Approved or variable review states set `reviewRequired: false`."
+      ],
+      "expectedChangedPaths": [
+        "apps/api/test/server.test.ts",
+        "packages/contracts/src/index.ts",
+        "packages/task-engine/src/index.ts",
+        "packages/task-engine/test/index.test.ts"
+      ],
+      "validationCommand": "npm run build && node --test dist/apps/api/test/server.test.js dist/packages/task-engine/test/index.test.js",
+      "successCriteria": [
+        "API and task-engine tests pass.",
+        "The field is derived, not hard-coded in fixtures."
+      ],
+      "requiredChecks": [
+        "API unit tests",
+        "Task-engine unit tests"
+      ],
+      "requiredArtifacts": [
+        "pull_request",
+        "test_evidence"
+      ],
+      "scoring": {
+        "correctness": 0.45,
+        "tests": 0.25,
+        "cross_package_safety": 0.2,
+        "artifact_quality": 0.1
+      }
+    },
+    {
+      "id": "bm_benchmark_detail_enrichment",
+      "title": "Enrich benchmark detail responses with scenario and rollback metadata",
+      "issueBody": "`GET /benchmarks/:id` should return enough context for benchmark clients to understand the task without separately fetching the scenario. Add scenario summary fields and rollback eligibility to the response.",
+      "issueSlug": "benchmark-detail-enrichment",
+      "scenarioId": "scratch-live-cycle",
+      "priority": "medium",
+      "packages": [
+        "apps/api",
+        "packages/task-engine"
+      ],
+      "taskType": "cross_package",
+      "difficulty": "hard",
+      "acceptanceCriteria": [
+        "`GET /benchmarks/:id` includes scenario id, kind, CI expectation, review expectation, and rollback eligibility.",
+        "Unknown benchmark ids still return 404.",
+        "Existing benchmark task fields remain at the top level of the response."
+      ],
+      "expectedChangedPaths": [
+        "apps/api/src/fixtures.ts",
+        "apps/api/src/server.ts",
+        "apps/api/test/server.test.ts"
+      ],
+      "validationCommand": "npm run build && node --test dist/apps/api/test/server.test.js",
+      "successCriteria": [
+        "API tests pass.",
+        "The response is derived from catalog plus scenario manifest data."
+      ],
+      "requiredChecks": [
+        "API unit tests"
+      ],
+      "requiredArtifacts": [
+        "pull_request",
+        "test_evidence"
+      ],
+      "scoring": {
+        "correctness": 0.45,
+        "tests": 0.25,
+        "cross_package_safety": 0.2,
+        "artifact_quality": 0.1
+      }
+    },
+    {
+      "id": "bm_node_setup_check",
+      "title": "Add a setup check for Node and workspace dependencies",
+      "issueBody": "Fresh benchmark workspaces should fail fast with a clear setup message. Add a setup validation script that checks the Node major version and confirms lockfile-defined workspace dependencies are installed.",
+      "issueSlug": "benchmark-node-setup-check",
+      "scenarioId": "scratch-live-cycle",
+      "priority": "low",
+      "packages": [
+        "scripts"
+      ],
+      "taskType": "tooling_setup",
+      "difficulty": "medium",
+      "acceptanceCriteria": [
+        "Add `scripts/check-setup.mjs`.",
+        "The script validates Node is at least major version 20.",
+        "The script detects missing `node_modules` with a clear `npm ci` hint.",
+        "`package.json` exposes the script as `npm run check:setup`."
+      ],
+      "expectedChangedPaths": [
+        "package.json",
+        "scripts/check-setup.mjs"
+      ],
+      "validationCommand": "npm run check:setup",
+      "successCriteria": [
+        "The setup check passes after `npm ci`.",
+        "The script has clear failure messages for unsupported Node or missing dependencies."
+      ],
+      "requiredChecks": [
+        "Setup check"
+      ],
+      "requiredArtifacts": [
+        "pull_request",
+        "test_evidence"
+      ],
+      "scoring": {
+        "correctness": 0.5,
+        "tests": 0.2,
+        "developer_experience": 0.2,
+        "artifact_quality": 0.1
       }
     }
   ]
