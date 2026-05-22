@@ -1,6 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { buildTaskSnapshot, deriveReviewGate } from "../src/index.js";
+import type { TaskSnapshot } from "../../contracts/src/index.js";
+import { buildTaskSnapshot, deriveReviewGate, summarizeTaskSnapshots } from "../src/index.js";
 
 test("deriveReviewGate blocks ship when CI is failing", () => {
   const result = deriveReviewGate({ ciStatus: "failed", reviewOutcome: "approved" });
@@ -58,6 +59,7 @@ test("buildTaskSnapshot reflects rollback eligibility from scenario", () => {
 
   assert.equal(snapshot.rollbackEligible, true);
   assert.equal(snapshot.priority, "high");
+  assert.equal(snapshot.taskType, "cross_cutting");
 });
 
 test("buildTaskSnapshot keeps seeded ready state while suppressing ship action", () => {
@@ -101,4 +103,46 @@ test("buildTaskSnapshot keeps seeded ready state while suppressing ship action",
 
   assert.equal(snapshot.status, "ready_to_ship");
   assert.deepEqual(snapshot.availableActions, ["view_ci_status", "view_review_feedback"]);
+});
+
+test("summarizeTaskSnapshots counts totals by status, priority, and task type", () => {
+  const snapshots = [
+    {
+      id: "task-1",
+      title: "Task 1",
+      scenarioId: "scenario-1",
+      taskType: "feature",
+      status: "ready_to_ship",
+      priority: "high",
+      availableActions: ["ship"],
+      rollbackEligible: false
+    },
+    {
+      id: "task-2",
+      title: "Task 2",
+      scenarioId: "scenario-2",
+      taskType: "bugfix",
+      status: "todo",
+      priority: "high",
+      availableActions: ["submit"],
+      rollbackEligible: true
+    },
+    {
+      id: "task-3",
+      title: "Task 3",
+      scenarioId: "scenario-3",
+      taskType: "feature",
+      status: "in_review",
+      priority: "low",
+      availableActions: ["refresh"],
+      rollbackEligible: false
+    }
+  ] satisfies TaskSnapshot[];
+
+  const summary = summarizeTaskSnapshots(snapshots);
+
+  assert.equal(summary.total, 3);
+  assert.deepEqual(summary.byStatus, { todo: 1, in_review: 1, ready_to_ship: 1 });
+  assert.deepEqual(summary.byPriority, { critical: 0, high: 2, medium: 0, low: 1 });
+  assert.deepEqual(summary.byTaskType, { feature: 2, bugfix: 1 });
 });
