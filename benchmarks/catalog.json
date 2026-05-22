@@ -225,7 +225,7 @@
       "acceptanceCriteria": [
         "Linear intake tasks route to the scratch live-cycle scenario.",
         "AgentRail opens a pull request for the managed runner output.",
-        "Passing GitHub Actions checks mark the task shippable."
+        "Passing GitHub Actions checks mark the task shippable after submit."
       ],
       "expectedChangedPaths": [
         "benchmarks/catalog.json"
