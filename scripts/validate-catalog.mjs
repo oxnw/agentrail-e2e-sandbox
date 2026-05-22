@@ -5,6 +5,11 @@ const catalog = JSON.parse(await readFile(catalogPath(), "utf8"));
 const scenarioIds = new Set(manifest.scenarios.map((scenario) => scenario.id));
 const validPriorities = new Set(["critical", "high", "medium", "low"]);
 
+if (process.argv.includes("--self-test-duplicate-ids")) {
+  runDuplicateIdSelfTest();
+  process.exit(0);
+}
+
 if (catalog.version !== 1) {
   throw new Error(`Unsupported benchmark catalog version: ${catalog.version}`);
 }
@@ -17,10 +22,7 @@ const taskIds = new Set();
 
 for (const task of catalog.tasks) {
   requireString(task.id, "task.id");
-  if (taskIds.has(task.id)) {
-    throw new Error(`Duplicate benchmark task id: ${task.id}.`);
-  }
-  taskIds.add(task.id);
+  requireUniqueTaskId(task.id, taskIds);
 
   requireString(task.title, `task.title for ${task.id}`);
   requireString(task.issueSlug, `task.issueSlug for ${task.id}`);
@@ -63,7 +65,31 @@ function requireArray(value, label) {
   }
 }
 
+function requireUniqueTaskId(taskId, taskIds) {
+  if (taskIds.has(taskId)) {
+    throw new Error(`Duplicate benchmark task id: ${taskId}.`);
+  }
+  taskIds.add(taskId);
+}
+
 function catalogPath() {
   const catalogArg = process.argv.find((arg) => arg.startsWith("--catalog="));
   return catalogArg ? catalogArg.slice("--catalog=".length) : new URL("../benchmarks/catalog.json", import.meta.url);
+}
+
+function runDuplicateIdSelfTest() {
+  const duplicateId = "bm_duplicate_fixture";
+  const seenTaskIds = new Set([duplicateId]);
+
+  try {
+    requireUniqueTaskId(duplicateId, seenTaskIds);
+  } catch (error) {
+    if (error instanceof Error && error.message.includes(duplicateId)) {
+      console.log(`Duplicate task id self-test passed for ${duplicateId}.`);
+      return;
+    }
+    throw error;
+  }
+
+  throw new Error("Duplicate task id self-test did not reject a duplicate id.");
 }
