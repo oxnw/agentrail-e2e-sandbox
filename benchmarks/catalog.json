@@ -173,6 +173,40 @@
       }
     },
     {
+      "id": "bm_api_task_detail",
+      "title": "Add task detail lookups by task id",
+      "issueSlug": "benchmark-api-task-detail-lookup",
+      "scenarioId": "golden-open",
+      "priority": "medium",
+      "packages": [
+        "apps/api"
+      ],
+      "taskType": "api_feature",
+      "acceptanceCriteria": [
+        "GET /tasks/bm_api_task_detail returns that task snapshot.",
+        "Unknown task ids return a 404 JSON error.",
+        "GET /tasks/summary is not shadowed by the dynamic route."
+      ],
+      "expectedChangedPaths": [
+        "apps/api/src/fixtures.ts",
+        "apps/api/src/server.ts",
+        "apps/api/test/server.test.ts"
+      ],
+      "requiredChecks": [
+        "API unit tests"
+      ],
+      "requiredArtifacts": [
+        "pull_request",
+        "test_evidence"
+      ],
+      "scoring": {
+        "correctness": 0.55,
+        "tests": 0.25,
+        "api_behavior": 0.15,
+        "scope_control": 0.05
+      }
+    },
+    {
       "id": "bm_crosspkg_rollback_audit",
       "title": "Record rollback eligibility in task snapshots",
       "issueSlug": "benchmark-rollback-eligibility-audit",
