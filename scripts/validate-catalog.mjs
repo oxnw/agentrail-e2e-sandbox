@@ -22,13 +22,10 @@ export function validateCatalog(catalog, scenarioIds) {
     throw new Error("Benchmark catalog must contain at least one task.");
   }
 
-  const taskIds = new Set();
+  validateUniqueTaskIds(catalog.tasks);
+
   for (const task of catalog.tasks) {
     requireString(task.id, "task.id");
-    if (taskIds.has(task.id)) {
-      throw new Error(`Duplicate benchmark task id: ${task.id}.`);
-    }
-    taskIds.add(task.id);
 
     requireString(task.title, `task.title for ${task.id}`);
     requireString(task.issueSlug, `task.issueSlug for ${task.id}`);
@@ -55,6 +52,17 @@ export function validateCatalog(catalog, scenarioIds) {
     if (Math.abs(scoreTotal - 1) > 0.001) {
       throw new Error(`Task ${task.id} scoring must sum to 1. Found ${scoreTotal}.`);
     }
+  }
+}
+
+function validateUniqueTaskIds(tasks) {
+  const taskIds = new Set();
+  for (const task of tasks) {
+    requireString(task.id, "task.id");
+    if (taskIds.has(task.id)) {
+      throw new Error(`Duplicate benchmark task id: ${task.id}.`);
+    }
+    taskIds.add(task.id);
   }
 }
 
