@@ -1,5 +1,13 @@
 import http from "node:http";
-import { getBenchmarkTask, getScenario, buildTaskSnapshots } from "./fixtures.js";
+import {
+  getBenchmarkTask,
+  getScenario,
+  isTaskPriority,
+  isTaskStatus,
+  listTaskSnapshots,
+  taskPriorities,
+  taskStatuses
+} from "./fixtures.js";
 
 function json(res: http.ServerResponse, status: number, body: unknown) {
   res.writeHead(status, { "content-type": "application/json" });
@@ -15,7 +23,34 @@ export function createServer() {
     }
 
     if (req.method === "GET" && url.pathname === "/tasks") {
-      return json(res, 200, { data: buildTaskSnapshots() });
+      const status = url.searchParams.get("status");
+      const priority = url.searchParams.get("priority");
+
+      if (status !== null && !isTaskStatus(status)) {
+        return json(res, 400, {
+          error: {
+            code: "invalid_filter",
+            message: "Unsupported status filter value.",
+            field: "status",
+            value: status,
+            supportedValues: taskStatuses
+          }
+        });
+      }
+
+      if (priority !== null && !isTaskPriority(priority)) {
+        return json(res, 400, {
+          error: {
+            code: "invalid_filter",
+            message: "Unsupported priority filter value.",
+            field: "priority",
+            value: priority,
+            supportedValues: taskPriorities
+          }
+        });
+      }
+
+      return json(res, 200, { data: listTaskSnapshots({ status: status ?? undefined, priority: priority ?? undefined }) });
     }
 
     const benchmarkMatch = req.method === "GET" ? url.pathname.match(/^\/benchmarks\/([^/]+)$/) : null;
