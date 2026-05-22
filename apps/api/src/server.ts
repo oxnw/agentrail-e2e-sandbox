@@ -1,5 +1,5 @@
 import http from "node:http";
-import { getBenchmarkTask, getScenario, buildTaskSnapshots } from "./fixtures.js";
+import { buildTaskSnapshotById, buildTaskSnapshots, getBenchmarkTask, getScenario } from "./fixtures.js";
 
 function json(res: http.ServerResponse, status: number, body: unknown) {
   res.writeHead(status, { "content-type": "application/json" });
@@ -16,6 +16,27 @@ export function createServer() {
 
     if (req.method === "GET" && url.pathname === "/tasks") {
       return json(res, 200, { data: buildTaskSnapshots() });
+    }
+
+    if (req.method === "GET" && url.pathname === "/tasks/summary") {
+      const snapshots = buildTaskSnapshots();
+      return json(res, 200, {
+        data: {
+          total: snapshots.length,
+          readyToShip: snapshots.filter((task) => task.status === "ready_to_ship").length,
+          inReview: snapshots.filter((task) => task.status === "in_review").length,
+          todo: snapshots.filter((task) => task.status === "todo").length
+        }
+      });
+    }
+
+    const taskMatch = req.method === "GET" ? url.pathname.match(/^\/tasks\/([^/]+)$/) : null;
+    if (taskMatch) {
+      const task = buildTaskSnapshotById(taskMatch[1]);
+      if (!task) {
+        return json(res, 404, { error: { code: "not_found", message: "Task was not found." } });
+      }
+      return json(res, 200, { data: task });
     }
 
     const benchmarkMatch = req.method === "GET" ? url.pathname.match(/^\/benchmarks\/([^/]+)$/) : null;
