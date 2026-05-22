@@ -1,5 +1,5 @@
 import http from "node:http";
-import { getBenchmarkTask, getScenario, buildTaskSnapshots } from "./fixtures.js";
+import { buildTaskSnapshots, getBenchmarkTask, getScenario, getTaskSnapshot, summarizeTaskSnapshots } from "./fixtures.js";
 
 function json(res: http.ServerResponse, status: number, body: unknown) {
   res.writeHead(status, { "content-type": "application/json" });
@@ -16,6 +16,19 @@ export function createServer() {
 
     if (req.method === "GET" && url.pathname === "/tasks") {
       return json(res, 200, { data: buildTaskSnapshots() });
+    }
+
+    if (req.method === "GET" && url.pathname === "/tasks/summary") {
+      return json(res, 200, { data: summarizeTaskSnapshots() });
+    }
+
+    const taskMatch = req.method === "GET" ? url.pathname.match(/^\/tasks\/([^/]+)$/) : null;
+    if (taskMatch) {
+      const task = getTaskSnapshot(taskMatch[1]);
+      if (!task) {
+        return json(res, 404, { error: { code: "not_found", message: "Task was not found." } });
+      }
+      return json(res, 200, { data: task });
     }
 
     const benchmarkMatch = req.method === "GET" ? url.pathname.match(/^\/benchmarks\/([^/]+)$/) : null;
