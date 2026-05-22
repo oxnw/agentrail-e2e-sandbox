@@ -38,6 +38,8 @@ npm run catalog:validate
 npm test
 ```
 
+CI runs the same validation set, so local runs should stay green before a sandbox PR is submitted.
+
 ## Current scenario lanes
 
 - `golden-open`: open PR with green CI and approved review
