@@ -1,13 +1,19 @@
 import http from "node:http";
-import { getBenchmarkTask, getScenario, buildTaskSnapshots } from "./fixtures.js";
+import { getBenchmarkTask, getScenario, buildTaskSnapshots, isTaskPriority, isTaskStatus } from "./fixtures.js";
 
-function json(res: http.ServerResponse, status: number, body: unknown) {
+type ApiRequest = Pick<http.IncomingMessage, "method" | "url">;
+interface JsonResponse {
+  writeHead(statusCode: number, headers: Record<string, string>): void;
+  end(chunk: string): void;
+}
+
+function json(res: JsonResponse, status: number, body: unknown) {
   res.writeHead(status, { "content-type": "application/json" });
   res.end(JSON.stringify(body));
 }
 
-export function createServer() {
-  return http.createServer((req, res) => {
+export function createRequestHandler() {
+  return (req: ApiRequest, res: JsonResponse) => {
     const url = new URL(req.url ?? "/", "http://localhost");
 
     if (req.method === "GET" && url.pathname === "/health") {
@@ -15,7 +21,22 @@ export function createServer() {
     }
 
     if (req.method === "GET" && url.pathname === "/tasks") {
-      return json(res, 200, { data: buildTaskSnapshots() });
+      const status = url.searchParams.get("status");
+      const priority = url.searchParams.get("priority");
+
+      if (status !== null && !isTaskStatus(status)) {
+        return json(res, 400, { error: { code: "invalid_filter", message: `Unsupported status filter: ${status}` } });
+      }
+
+      if (priority !== null && !isTaskPriority(priority)) {
+        return json(res, 400, { error: { code: "invalid_filter", message: `Unsupported priority filter: ${priority}` } });
+      }
+
+      const tasks = buildTaskSnapshots().filter((task) => {
+        return (status === null || task.status === status) && (priority === null || task.priority === priority);
+      });
+
+      return json(res, 200, { data: tasks });
     }
 
     const benchmarkMatch = req.method === "GET" ? url.pathname.match(/^\/benchmarks\/([^/]+)$/) : null;
@@ -37,5 +58,9 @@ export function createServer() {
     }
 
     return json(res, 404, { error: { code: "not_found", message: "Route was not found." } });
-  });
+  };
+}
+
+export function createServer() {
+  return http.createServer(createRequestHandler());
 }
