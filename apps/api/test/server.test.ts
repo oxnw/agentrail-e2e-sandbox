@@ -72,4 +72,34 @@ test("GET /tasks returns scenario-aware task snapshots", async (t) => {
   assert.ok(goldenTask);
   assert.equal(goldenTask.status, "ready_to_ship");
   assert.equal(goldenTask.availableActions.includes("ship"), false);
+  assert.equal(typeof goldenTask.taskType, "string");
 });
+
+test("GET /tasks/summary returns counts derived from task snapshots", async (t) => {
+  const server = createServer();
+  server.listen(0, "127.0.0.1");
+  await once(server, "listening");
+  t.after(() => {
+    server.close();
+  });
+
+  const address = server.address() as AddressInfo;
+  const tasksResponse = await fetch(`http://127.0.0.1:${address.port}/tasks`);
+  const tasksBody = await tasksResponse.json();
+  const summaryResponse = await fetch(`http://127.0.0.1:${address.port}/tasks/summary`);
+  const summaryBody = await summaryResponse.json();
+
+  assert.equal(summaryResponse.status, 200);
+  assert.equal(summaryBody.data.total, tasksBody.data.length);
+  assert.deepEqual(summaryBody.data.byStatus, countBy(tasksBody.data, "status", ["todo", "in_review", "ready_to_ship"]));
+  assert.deepEqual(summaryBody.data.byPriority, countBy(tasksBody.data, "priority", ["critical", "high", "medium", "low"]));
+  assert.deepEqual(summaryBody.data.byTaskType, countBy(tasksBody.data, "taskType"));
+});
+
+function countBy(records: Array<Record<string, string>>, field: string, keys: string[] = []) {
+  const initialCounts = Object.fromEntries(keys.map((key) => [key, 0])) as Record<string, number>;
+  return records.reduce<Record<string, number>>((counts, record) => {
+    counts[record[field]] = (counts[record[field]] ?? 0) + 1;
+    return counts;
+  }, initialCounts);
+}
