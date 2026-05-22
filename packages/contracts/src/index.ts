@@ -59,10 +59,18 @@ export interface TaskSnapshot {
   id: string;
   title: string;
   scenarioId: string;
+  taskType: string;
   status: TaskStatus;
   priority: Priority;
   availableActions: string[];
   rollbackEligible: boolean;
+}
+
+export interface TaskSummary {
+  total: number;
+  byStatus: Record<TaskStatus, number>;
+  byPriority: Record<Priority, number>;
+  byTaskType: Record<string, number>;
 }
 
 const PRIORITY_ALIASES = new Map<string, Priority>([
