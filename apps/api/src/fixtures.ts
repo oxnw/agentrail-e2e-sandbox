@@ -6,6 +6,9 @@ import { buildTaskSnapshot } from "../../../packages/task-engine/src/index.js";
 const catalog = benchmarkCatalog as unknown as BenchmarkCatalog;
 const manifest = scenarioManifest as unknown as ScenarioManifest;
 
+export const TASK_STATUSES = ["todo", "in_review", "ready_to_ship"] as const;
+export const TASK_PRIORITIES = ["critical", "high", "medium", "low"] as const;
+
 export function listScenarios() {
   return manifest.scenarios;
 }
