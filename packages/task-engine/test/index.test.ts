@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { buildTaskSnapshot, deriveReviewGate } from "../src/index.js";
+import { buildTaskSnapshot, deriveReviewGate, deriveReviewRequired } from "../src/index.js";
 
 test("deriveReviewGate blocks ship when CI is failing", () => {
   const result = deriveReviewGate({ ciStatus: "failed", reviewOutcome: "approved" });
@@ -18,6 +18,13 @@ test("deriveReviewGate hides ship for approved seeded scenarios with allowShip f
   const result = deriveReviewGate({ ciStatus: "passed", reviewOutcome: "approved", allowShip: false });
   assert.equal(result.status, "ready_to_ship");
   assert.deepEqual(result.availableActions, ["view_ci_status", "view_review_feedback"]);
+});
+
+test("deriveReviewRequired flags pending and changes-requested outcomes only", () => {
+  assert.equal(deriveReviewRequired("pending"), true);
+  assert.equal(deriveReviewRequired("changes_requested"), true);
+  assert.equal(deriveReviewRequired("approved"), false);
+  assert.equal(deriveReviewRequired("variable"), false);
 });
 
 test("buildTaskSnapshot reflects rollback eligibility from scenario", () => {
@@ -58,6 +65,7 @@ test("buildTaskSnapshot reflects rollback eligibility from scenario", () => {
 
   assert.equal(snapshot.rollbackEligible, true);
   assert.equal(snapshot.priority, "high");
+  assert.equal(snapshot.reviewRequired, false);
 });
 
 test("buildTaskSnapshot keeps seeded ready state while suppressing ship action", () => {
@@ -101,4 +109,47 @@ test("buildTaskSnapshot keeps seeded ready state while suppressing ship action",
 
   assert.equal(snapshot.status, "ready_to_ship");
   assert.deepEqual(snapshot.availableActions, ["view_ci_status", "view_review_feedback"]);
+  assert.equal(snapshot.reviewRequired, false);
+});
+
+test("buildTaskSnapshot marks review required when scenario has requested changes", () => {
+  const snapshot = buildTaskSnapshot({
+    task: {
+      id: "bm_failing_review",
+      title: "Failing review task",
+      issueSlug: "benchmark-failing-review",
+      scenarioId: "failing-open",
+      priority: "medium",
+      packages: ["apps/api"],
+      taskType: "feature",
+      acceptanceCriteria: ["x"],
+      expectedChangedPaths: ["apps/api/src/server.ts"],
+      requiredChecks: ["CI / Unit Tests"],
+      requiredArtifacts: ["pull_request"],
+      scoring: { correctness: 1 }
+    },
+    scenario: {
+      id: "failing-open",
+      kind: "seeded",
+      issueSlug: "benchmark-review-followup",
+      branch: "scenario/failing-open",
+      baseBranch: "main",
+      shipTargetBranch: "integration/live",
+      expectedCiStatus: "passed",
+      expectedReviewOutcome: "changes_requested",
+      allowSubmit: true,
+      allowShip: false,
+      allowRollback: false,
+      live: {
+        owner: "oxnw",
+        repo: "agentrail-e2e-sandbox",
+        issueNumber: 2,
+        pullNumber: 2,
+        headBranch: "scenario/failing-open"
+      },
+      notes: "seeded"
+    }
+  });
+
+  assert.equal(snapshot.reviewRequired, true);
 });

@@ -6,36 +6,42 @@ function json(res: http.ServerResponse, status: number, body: unknown) {
   res.end(JSON.stringify(body));
 }
 
+export function handleApiRequest(method: string | undefined, path: string | undefined): { status: number; body: unknown } {
+  const url = new URL(path ?? "/", "http://localhost");
+
+  if (method === "GET" && url.pathname === "/health") {
+    return { status: 200, body: { status: "ok", service: "agentrail-e2e-sandbox-api" } };
+  }
+
+  if (method === "GET" && url.pathname === "/tasks") {
+    return { status: 200, body: { data: buildTaskSnapshots() } };
+  }
+
+  const benchmarkMatch = method === "GET" ? url.pathname.match(/^\/benchmarks\/([^/]+)$/) : null;
+  if (benchmarkMatch) {
+    const task = getBenchmarkTask(benchmarkMatch[1]);
+    if (!task) {
+      return { status: 404, body: { error: { code: "not_found", message: "Benchmark task was not found." } } };
+    }
+    return { status: 200, body: { data: task } };
+  }
+
+  const scenarioMatch = method === "GET" ? url.pathname.match(/^\/scenarios\/([^/]+)$/) : null;
+  if (scenarioMatch) {
+    const scenario = getScenario(scenarioMatch[1]);
+    if (!scenario) {
+      return { status: 404, body: { error: { code: "not_found", message: "Scenario was not found." } } };
+    }
+    return { status: 200, body: { data: scenario } };
+  }
+
+  return { status: 404, body: { error: { code: "not_found", message: "Route was not found." } } };
+}
+
 export function createServer() {
   return http.createServer((req, res) => {
-    const url = new URL(req.url ?? "/", "http://localhost");
+    const response = handleApiRequest(req.method, req.url);
 
-    if (req.method === "GET" && url.pathname === "/health") {
-      return json(res, 200, { status: "ok", service: "agentrail-e2e-sandbox-api" });
-    }
-
-    if (req.method === "GET" && url.pathname === "/tasks") {
-      return json(res, 200, { data: buildTaskSnapshots() });
-    }
-
-    const benchmarkMatch = req.method === "GET" ? url.pathname.match(/^\/benchmarks\/([^/]+)$/) : null;
-    if (benchmarkMatch) {
-      const task = getBenchmarkTask(benchmarkMatch[1]);
-      if (!task) {
-        return json(res, 404, { error: { code: "not_found", message: "Benchmark task was not found." } });
-      }
-      return json(res, 200, { data: task });
-    }
-
-    const scenarioMatch = req.method === "GET" ? url.pathname.match(/^\/scenarios\/([^/]+)$/) : null;
-    if (scenarioMatch) {
-      const scenario = getScenario(scenarioMatch[1]);
-      if (!scenario) {
-        return json(res, 404, { error: { code: "not_found", message: "Scenario was not found." } });
-      }
-      return json(res, 200, { data: scenario });
-    }
-
-    return json(res, 404, { error: { code: "not_found", message: "Route was not found." } });
+    return json(res, response.status, response.body);
   });
 }
