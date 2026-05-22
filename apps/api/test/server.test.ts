@@ -73,3 +73,56 @@ test("GET /tasks returns scenario-aware task snapshots", async (t) => {
   assert.equal(goldenTask.status, "ready_to_ship");
   assert.equal(goldenTask.availableActions.includes("ship"), false);
 });
+
+test("GET /tasks/:id returns the matching task snapshot", async (t) => {
+  const server = createServer();
+  server.listen(0, "127.0.0.1");
+  await once(server, "listening");
+  t.after(() => {
+    server.close();
+  });
+
+  const address = server.address() as AddressInfo;
+  const listResponse = await fetch(`http://127.0.0.1:${address.port}/tasks`);
+  const listBody = await listResponse.json();
+  const detailResponse = await fetch(`http://127.0.0.1:${address.port}/tasks/bm_api_task_detail`);
+  const detailBody = await detailResponse.json();
+  const listSnapshot = listBody.data.find((task: { id: string }) => task.id === "bm_api_task_detail");
+
+  assert.equal(detailResponse.status, 200);
+  assert.deepEqual(detailBody.data, listSnapshot);
+});
+
+test("GET /tasks/:id returns 404 for unknown task snapshots", async (t) => {
+  const server = createServer();
+  server.listen(0, "127.0.0.1");
+  await once(server, "listening");
+  t.after(() => {
+    server.close();
+  });
+
+  const address = server.address() as AddressInfo;
+  const response = await fetch(`http://127.0.0.1:${address.port}/tasks/not-a-real-task`);
+  const body = await response.json();
+
+  assert.equal(response.status, 404);
+  assert.equal(body.error.code, "not_found");
+  assert.equal(body.error.message, "Task snapshot was not found.");
+});
+
+test("GET /tasks/summary is not shadowed by task detail lookup", async (t) => {
+  const server = createServer();
+  server.listen(0, "127.0.0.1");
+  await once(server, "listening");
+  t.after(() => {
+    server.close();
+  });
+
+  const address = server.address() as AddressInfo;
+  const response = await fetch(`http://127.0.0.1:${address.port}/tasks/summary`);
+  const body = await response.json();
+
+  assert.equal(response.status, 200);
+  assert.equal(typeof body.data.total, "number");
+  assert.equal(typeof body.data.readyToShip, "number");
+});

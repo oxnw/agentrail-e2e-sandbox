@@ -25,3 +25,7 @@ export function getBenchmarkTask(id: string) {
 export function buildTaskSnapshots(): TaskSnapshot[] {
   return catalog.tasks.map((task) => buildTaskSnapshot({ task, scenario: getScenario(task.scenarioId) }));
 }
+
+export function getTaskSnapshot(id: string): TaskSnapshot | null {
+  return buildTaskSnapshots().find((task) => task.id === id) ?? null;
+}
