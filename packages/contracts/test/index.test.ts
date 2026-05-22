@@ -67,3 +67,49 @@ test("validateScenarioDefinition requires concrete seeded live metadata", () => 
     notes: "missing"
   }));
 });
+
+test("validateScenarioDefinition rejects seeded live branch mismatches", () => {
+  assert.throws(() => validateScenarioDefinition({
+    id: "seeded-branch-mismatch",
+    kind: "seeded",
+    issueSlug: "seeded-branch-mismatch",
+    branch: "scenario/seeded-branch-mismatch",
+    baseBranch: "main",
+    shipTargetBranch: "integration/live",
+    expectedCiStatus: "passed",
+    expectedReviewOutcome: "approved",
+    allowSubmit: true,
+    allowShip: false,
+    allowRollback: false,
+    live: {
+      owner: "oxnw",
+      repo: "agentrail-e2e-sandbox",
+      issueNumber: 1,
+      pullNumber: 1,
+      headBranch: "scenario/different"
+    },
+    notes: "mismatch"
+  }), /seeded-branch-mismatch/);
+});
+
+test("validateScenarioDefinition allows scratch live branch templates", () => {
+  assert.doesNotThrow(() => validateScenarioDefinition({
+    id: "scratch-template",
+    kind: "scratch",
+    issueSlug: "scratch-template",
+    branch: "scratch/<feature>-<date>",
+    baseBranch: "integration/live",
+    shipTargetBranch: "integration/live",
+    expectedCiStatus: "variable",
+    expectedReviewOutcome: "variable",
+    allowSubmit: true,
+    allowShip: true,
+    allowRollback: true,
+    live: {
+      owner: "oxnw",
+      repo: "agentrail-e2e-sandbox",
+      headBranch: "scratch/<feature>-<date>"
+    },
+    notes: "template"
+  }));
+});
