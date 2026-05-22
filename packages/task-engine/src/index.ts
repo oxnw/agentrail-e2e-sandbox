@@ -9,6 +9,10 @@ export function deriveReviewGate({
   reviewOutcome: ReviewOutcome;
   allowShip?: boolean;
 }): { status: TaskStatus; availableActions: string[] } {
+  if (ciStatus === "flaky") {
+    return { status: "in_review", availableActions: ["rerun_ci", "view_ci_status"] };
+  }
+
   if (ciStatus === "failed") {
     return { status: "todo", availableActions: ["submit", "view_ci_status"] };
   }
