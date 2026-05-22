@@ -90,7 +90,8 @@ const PRIORITY_ALIASES = new Map<string, Priority>([
 ]);
 
 export function normalizePriorityLabel(label: string): Priority {
-  const normalized = PRIORITY_ALIASES.get(label.trim().toLowerCase());
+  const normalizedLabel = label.trim().toLowerCase();
+  const normalized = PRIORITY_ALIASES.get(normalizedLabel);
   if (!normalized) {
     throw new Error(`Unknown priority label: ${label}`);
   }
