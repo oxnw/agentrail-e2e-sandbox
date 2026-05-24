@@ -21,7 +21,10 @@ test("normalizePriorityLabel maps aliases", () => {
 });
 
 test("normalizePriorityLabel rejects unknown values", () => {
-  assert.throws(() => normalizePriorityLabel("escalated"));
+  assert.throws(
+    () => normalizePriorityLabel("escalated"),
+    /Unknown priority label: escalated/
+  );
 });
 
 test("validateScenarioDefinition rejects templated seeded branches", () => {
