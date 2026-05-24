@@ -8,6 +8,7 @@ test("normalizePriorityLabel maps aliases", () => {
   assert.equal(normalizePriorityLabel("blocker"), "critical");
   assert.equal(normalizePriorityLabel("P1"), "high");
   assert.equal(normalizePriorityLabel("major"), "high");
+  assert.equal(normalizePriorityLabel("vip"), "high");
   assert.equal(normalizePriorityLabel("sev1"), "high");
   assert.equal(normalizePriorityLabel("default"), "medium");
   assert.equal(normalizePriorityLabel("linear-e2e-57"), "medium");
@@ -20,7 +21,10 @@ test("normalizePriorityLabel maps aliases", () => {
 });
 
 test("normalizePriorityLabel rejects unknown values", () => {
-  assert.throws(() => normalizePriorityLabel("escalated"));
+  assert.throws(
+    () => normalizePriorityLabel("escalated"),
+    /Unknown priority label: escalated/
+  );
 });
 
 test("validateScenarioDefinition rejects templated seeded branches", () => {
